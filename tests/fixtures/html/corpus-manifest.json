@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "pages": [
+    {
+      "html": "controlled-corpus.html",
+      "expected": "controlled-corpus.expected.txt",
+      "recommended_viewport": {
+        "width": 3840,
+        "height": 2160,
+        "device_scale_factor": 1
+      },
+      "required_anchors": [
+        "TextSnap Layout",
+        "END-LONG-LINE",
+        "LEFT-COLUMN-A",
+        "RIGHT-COLUMN-A",
+        "INVERSE-TEXT",
+        "END-4K"
+      ]
+    }
+  ]
+}

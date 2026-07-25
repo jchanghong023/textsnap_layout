@@ -1,0 +1,3111 @@
+{
+  "schema_version": "1.0.0",
+  "target": {
+    "os": "windows",
+    "architecture": "x86_64",
+    "python_version": "3.13.14",
+    "implementation": "CPython",
+    "implementation_tag": "cp313",
+    "abi": "cp313_or_abi3",
+    "platform_tag": "win_amd64_or_any",
+    "marker_environment": {
+      "implementation_name": "cpython",
+      "implementation_version": "3.13.14",
+      "os_name": "nt",
+      "platform_machine": "AMD64",
+      "platform_release": "11",
+      "platform_system": "Windows",
+      "platform_version": "11",
+      "python_full_version": "3.13.14",
+      "platform_python_implementation": "CPython",
+      "python_version": "3.13",
+      "sys_platform": "win32"
+    }
+  },
+  "resolution": {
+    "artifact_count": 68,
+    "direct_requirements": [
+      "numpy==2.2.6",
+      "opencv-contrib-python==4.10.0.84",
+      "paddleocr==3.7.0",
+      "paddlepaddle==3.3.1",
+      "paddlex[ocr-core]==3.7.2",
+      "PySide6-Essentials==6.11.1"
+    ],
+    "selected_extra": "paddlex[ocr-core]",
+    "active_requires_dist_edges": 113,
+    "note": "Host pip target options do not reliably evaluate all Windows markers. This lock was re-evaluated with the explicit marker environment above; colorama and tzdata are required Windows-only additions.",
+    "installation_policy": "Fetch only these exact URLs, verify size and SHA-256, then install with dependency resolution disabled."
+  },
+  "artifacts": [
+    {
+      "name": "aiohappyeyeballs",
+      "version": "2.7.1",
+      "filename": "aiohappyeyeballs-2.7.1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/71/43/1947f06babed6b3f1d7f38b0c767f52df66bfb2bc10b468c4a7de9eceff2/aiohappyeyeballs-2.7.1-py3-none-any.whl",
+      "size": 15038,
+      "sha256": "9243213661e29250eb41368e5daa826fc017156c3b8a11440826b2e3ed376472",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aiohttp",
+            "requirement": "aiohappyeyeballs>=2.5.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "PSF-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "aiohappyeyeballs-2.7.1.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "aiohttp",
+      "version": "3.14.3",
+      "filename": "aiohttp-3.14.3-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/9d/69/3d876ac02659f271cf7f6769f14a8e3de5b6e888ed8b5a7e998086a4cec8/aiohttp-3.14.3-cp313-cp313-win_amd64.whl",
+      "size": 476518,
+      "sha256": "dff9461ec275f22135650d5ba4b4931a11f3958df7dfbb8db630000d4dee0883",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddleocr",
+            "requirement": "aiohttp>=3.8.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0 AND MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "aiohttp-3.14.3.dist-info/licenses/LICENSE.txt",
+            "aiohttp-3.14.3.dist-info/licenses/vendor/llhttp/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "aiosignal",
+      "version": "1.4.0",
+      "filename": "aiosignal-1.4.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/fb/76/641ae371508676492379f16e2fa48f4e2c11741bd63c48be4b12a6b09cba/aiosignal-1.4.0-py3-none-any.whl",
+      "size": 7490,
+      "sha256": "053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aiohttp",
+            "requirement": "aiosignal>=1.4.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "aiosignal-1.4.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "aistudio-sdk",
+      "version": "0.3.8",
+      "filename": "aistudio_sdk-0.3.8-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/cb/77/cd71a481bb7a76b0e9d0b6bf47711c627b1dd079001ea246893f19a9d04c/aistudio_sdk-0.3.8-py3-none-any.whl",
+      "size": 62972,
+      "sha256": "bfc96af7243ac2ee3303014849aa4028717cce5afa622af8cfe3a1d44d1941d6",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": null,
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "aistudio-sdk>=0.3.5"
+          }
+        ]
+      },
+      "license": {
+        "expression": "UNKNOWN",
+        "redistributable": false,
+        "status": "blocked",
+        "evidence": {
+          "status": "missing",
+          "embedded_paths": [],
+          "external_evidence_ids": [
+            "aistudio-sdk-0.3.8-pypi-json"
+          ],
+          "notes": [
+            "Wheel METADATA reports License: UNKNOWN.",
+            "Wheel has no License-File field or embedded license text.",
+            "PyPI release metadata provides no home page or project URL with verifiable redistribution terms."
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "filename": "annotated_types-0.8.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl",
+      "size": 13427,
+      "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "pydantic",
+            "requirement": "annotated-types>=0.6.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "annotated_types-0.8.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "anyio",
+      "version": "4.14.2",
+      "filename": "anyio-4.14.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/da/35/f2287558c17e29fafc8ef3daf819bb9834061cfa43bff8014f7df7f63bdc/anyio-4.14.2-py3-none-any.whl",
+      "size": 125813,
+      "sha256": "9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "httpx",
+            "requirement": "anyio"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "anyio-4.14.2.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0",
+      "filename": "attrs-26.1.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl",
+      "size": 67548,
+      "sha256": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aiohttp",
+            "requirement": "attrs>=17.3.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "attrs-26.1.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "bce-python-sdk",
+      "version": "0.9.76",
+      "filename": "bce_python_sdk-0.9.76-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/b9/06/4d4a26c3dfcdb29599f563329b87eefe55b02b3c2b9d8f8c3aeaa38a33a6/bce_python_sdk-0.9.76-py3-none-any.whl",
+      "size": 435179,
+      "sha256": "e629181d060f4ed8f29749f47139bf08f1f9b0d8b15daedc956900785587e8d8",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aistudio-sdk",
+            "requirement": "bce-python-sdk"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "external_locked",
+          "embedded_paths": [],
+          "external_evidence_ids": [
+            "bce-python-sdk-upstream-license"
+          ],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "certifi",
+      "version": "2026.7.22",
+      "filename": "certifi-2026.7.22-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl",
+      "size": 136983,
+      "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.7",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "httpcore",
+            "requirement": "certifi"
+          },
+          {
+            "name": "httpx",
+            "requirement": "certifi"
+          },
+          {
+            "name": "requests",
+            "requirement": "certifi>=2023.5.7"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MPL-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "certifi-2026.7.22.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "chardet",
+      "version": "7.4.3",
+      "filename": "chardet-7.4.3-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/1b/b3/5d0e77ea774bd3224321c248880ea0c0379000ac5c2bb6d77609549de247/chardet-7.4.3-cp313-cp313-win_amd64.whl",
+      "size": 944155,
+      "sha256": "e1b98790c284ff813f18f7cf7de5f05ea2435a080030c7f1a8318f3a4f80b131",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "chardet"
+          }
+        ]
+      },
+      "license": {
+        "expression": "0BSD",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "chardet-7.4.3.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.4.9",
+      "filename": "charset_normalizer-3.4.9-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/e8/ef/6953a77c7cf2c2ff9998e6f575ab3e380119f100223381565a4f94c1f836/charset_normalizer-3.4.9-cp313-cp313-win_amd64.whl",
+      "size": 161947,
+      "sha256": "fe2c7201c642b7c308f1675355ad7ff7b66acfe3541625efe5a3ad38f29d6115",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.7",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "requests",
+            "requirement": "charset_normalizer<4,>=2"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "charset_normalizer-3.4.9.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "click",
+      "version": "8.4.2",
+      "filename": "click-8.4.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/fb/e2/79c688af8b210d232694e31e59da9f6ec747bae31c3f5946e4e9b98860d5/click-8.4.2-py3-none-any.whl",
+      "size": 119243,
+      "sha256": "e6f9f66136c816745b9d65817da91d61d957fb16e02e4dcd0552553c5a197b76",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aistudio-sdk",
+            "requirement": "click"
+          },
+          {
+            "name": "huggingface-hub",
+            "requirement": "click<9.0.0,>=8.4.2"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "click-8.4.2.dist-info/licenses/LICENSE.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "filename": "colorama-0.4.6-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
+      "size": 25335,
+      "sha256": "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6",
+      "wheel_tags": [
+        "py2-none-any",
+        "py3-none-any"
+      ],
+      "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "click",
+            "requirement": "colorama; platform_system == 'Windows'"
+          },
+          {
+            "name": "colorlog",
+            "requirement": "colorama; sys_platform == \"win32\""
+          },
+          {
+            "name": "tqdm",
+            "requirement": "colorama; platform_system == \"Windows\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "colorama-0.4.6.dist-info/licenses/LICENSE.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "colorlog",
+      "version": "6.12.0",
+      "filename": "colorlog-6.12.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/d4/19/0b6647bf5e331521e55d2b63bfbdc210bd9cd605189273f03614a05f702d/colorlog-6.12.0-py3-none-any.whl",
+      "size": 12239,
+      "sha256": "30d392604e9110045a2c2aeefc27d7a017abbab63f3a8aee594eac0801df784e",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.6",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "colorlog"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "colorlog-6.12.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "crc32c",
+      "version": "2.8",
+      "filename": "crc32c-2.8-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/d0/db/fd0f698c15d1e21d47c64181a98290665a08fcbb3940cd559e9c15bda57e/crc32c-2.8-cp313-cp313-win_amd64.whl",
+      "size": 66646,
+      "sha256": "171ff0260d112c62abcce29332986950a57bddee514e0a2418bfde493ea06bb3",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.7",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "bce-python-sdk",
+            "requirement": "crc32c>=2.2.post0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "LGPL-2.1-or-later",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "crc32c-2.8.dist-info/licenses/AUTHORS.google-crc32c",
+            "crc32c-2.8.dist-info/licenses/LICENSE",
+            "crc32c-2.8.dist-info/licenses/LICENSE.google-crc32c",
+            "crc32c-2.8.dist-info/licenses/LICENSE.slice-by-8"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "filelock",
+      "version": "3.32.0",
+      "filename": "filelock-3.32.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/06/79/b4c714bef36bc4ec2beeae1e0c124f0223888cd8c6feb1cdc56038116920/filelock-3.32.0-py3-none-any.whl",
+      "size": 97732,
+      "sha256": "d396bea984af47333ef05e50eae7eff88c84256de6112aea0ec48a233c064fe3",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "huggingface-hub",
+            "requirement": "filelock>=3.10.0"
+          },
+          {
+            "name": "modelscope",
+            "requirement": "filelock"
+          },
+          {
+            "name": "modelscope-hub",
+            "requirement": "filelock>=3.9"
+          },
+          {
+            "name": "paddlex",
+            "requirement": "filelock"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "filelock-3.32.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "frozenlist",
+      "version": "1.8.0",
+      "filename": "frozenlist-1.8.0-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/d8/cf/174c91dbc9cc49bc7b7aab74d8b734e974d1faa8f191c74af9b7e80848e6/frozenlist-1.8.0-cp313-cp313-win_amd64.whl",
+      "size": 43882,
+      "sha256": "878be833caa6a3821caf85eb39c5ba92d28e85df26d57afb06b35b2efd937231",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aiohttp",
+            "requirement": "frozenlist>=1.1.1"
+          },
+          {
+            "name": "aiosignal",
+            "requirement": "frozenlist>=1.1.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "frozenlist-1.8.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.6.0",
+      "filename": "fsspec-2026.6.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/e5/22/4222d7ddf3da30f363edaa98e329c2bce6c65497c9cb2810931c8b2c0fbc/fsspec-2026.6.0-py3-none-any.whl",
+      "size": 203949,
+      "sha256": "02e0b71817df9b2169dc30a16832045764def1191b43dcff5bb85bdee212d2a1",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "huggingface-hub",
+            "requirement": "fsspec>=2023.5.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "fsspec-2026.6.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "future",
+      "version": "1.0.0",
+      "filename": "future-1.0.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/da/71/ae30dadffc90b9006d77af76b393cb9dfbfc9629f339fc1574a1c52e6806/future-1.0.0-py3-none-any.whl",
+      "size": 491326,
+      "sha256": "929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "bce-python-sdk",
+            "requirement": "future>=0.6.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "future-1.0.0.dist-info/LICENSE.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "filename": "h11-0.16.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl",
+      "size": 37515,
+      "sha256": "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "httpcore",
+            "requirement": "h11>=0.16"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "h11-0.16.0.dist-info/licenses/LICENSE.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "hf-xet",
+      "version": "1.5.2",
+      "filename": "hf_xet-1.5.2-cp38-abi3-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/e9/f8/68b01c5c2edb56ac9a67b3d076ffddcb90867abaee923923eb34e7a14e76/hf_xet-1.5.2-cp38-abi3-win_amd64.whl",
+      "size": 3988373,
+      "sha256": "ecf63d1cb69a9a7319910f8f83fcf9b46e7a32dfcf4b8f8eeddb55f647306e65",
+      "wheel_tags": [
+        "cp38-abi3-win_amd64"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "huggingface-hub",
+            "requirement": "hf-xet<2.0.0,>=1.5.1; platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": null,
+        "status": "pending",
+        "evidence": {
+          "status": "partial",
+          "embedded_paths": [
+            "hf_xet-1.5.2.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": [
+            "Native Rust wheel contains only the project Apache-2.0 text; statically linked crate notices have not been inventoried."
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "filename": "httpcore-1.0.9-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/7e/f5/f66802a942d491edb555dd61e3a9961140fd64c90bce1eafd741609d334d/httpcore-1.0.9-py3-none-any.whl",
+      "size": 78784,
+      "sha256": "2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "httpx",
+            "requirement": "httpcore==1.*"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "httpcore-1.0.9.dist-info/licenses/LICENSE.md"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "filename": "httpx-0.28.1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl",
+      "size": 73517,
+      "sha256": "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "huggingface-hub",
+            "requirement": "httpx<1,>=0.23.0"
+          },
+          {
+            "name": "paddlepaddle",
+            "requirement": "httpx"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "httpx-0.28.1.dist-info/licenses/LICENSE.md"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "huggingface-hub",
+      "version": "1.24.0",
+      "filename": "huggingface_hub-1.24.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/5f/c3/aeaaf3911d2529614be18d1c8b5496afc185560e76568063d517283318af/huggingface_hub-1.24.0-py3-none-any.whl",
+      "size": 771904,
+      "sha256": "6ed4120a84a6beec900640aa7e346bd766a6b7341e41526fef5dc8bd81fb7d59",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10.0",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "huggingface-hub"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "huggingface_hub-1.24.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "idna",
+      "version": "3.18",
+      "filename": "idna-3.18-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/1e/5e/d4e9f1a599fb8e573b7b87160658329fbf28d19eac2718f51fc3def3aa5a/idna-3.18-py3-none-any.whl",
+      "size": 65455,
+      "sha256": "7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "anyio",
+            "requirement": "idna>=2.8"
+          },
+          {
+            "name": "httpx",
+            "requirement": "idna"
+          },
+          {
+            "name": "requests",
+            "requirement": "idna<4,>=2.5"
+          },
+          {
+            "name": "yarl",
+            "requirement": "idna>=2.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "idna-3.18.dist-info/licenses/LICENSE.md"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "imagesize",
+      "version": "2.0.0",
+      "filename": "imagesize-2.0.0-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/5f/53/fb7122b71361a0d121b669dcf3d31244ef75badbbb724af388948de543e2/imagesize-2.0.0-py2.py3-none-any.whl",
+      "size": 9441,
+      "sha256": "5667c5bbb57ab3f1fa4bc366f4fbc971db3d5ed011fd2715fd8001f782718d96",
+      "wheel_tags": [
+        "py2-none-any",
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10,<3.15",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "imagesize; extra == \"ocr-core\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "imagesize-2.0.0.dist-info/licenses/LICENSE.rst"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "modelscope",
+      "version": "1.38.1",
+      "filename": "modelscope-1.38.1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/5d/f3/caf5ef8c4adc99cd66607639642ae503ac190a3358f782776687200a7c36/modelscope-1.38.1-py3-none-any.whl",
+      "size": 6034052,
+      "sha256": "7d65be96999144ca045386d27a8ea057b8777504c538d9755d60ec2c8906fe72",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "modelscope>=1.28.0; python_version >= \"3.9\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "modelscope-1.38.1.dist-info/licenses/LICENSE",
+            "modelscope/pipelines/cv/license_plate_detection_pipeline.py"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "modelscope-hub",
+      "version": "0.1.8",
+      "filename": "modelscope_hub-0.1.8-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/2f/3c/ddc57e2bcf176b81fb344b030153d61daa4a7d69f559189d1685da43e459/modelscope_hub-0.1.8-py3-none-any.whl",
+      "size": 149415,
+      "sha256": "905ffd0a64c99bd34d40a72452dba97611f702b1887c11ba694584fb46d25420",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "modelscope",
+            "requirement": "modelscope-hub>=0.0.7"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "modelscope_hub-0.1.8.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "multidict",
+      "version": "6.7.1",
+      "filename": "multidict-6.7.1-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/b2/35/e994121b0e90e46134673422dd564623f93304614f5d11886b1b3e06f503/multidict-6.7.1-cp313-cp313-win_amd64.whl",
+      "size": 45884,
+      "sha256": "960c83bf01a95b12b08fd54324a4eb1d5b52c88932b5cba5d6e712bb3ed12eb5",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aiohttp",
+            "requirement": "multidict<7.0,>=4.5"
+          },
+          {
+            "name": "yarl",
+            "requirement": "multidict>=4.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "multidict-6.7.1.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "filename": "networkx-3.6.1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl",
+      "size": 2068504,
+      "sha256": "d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": "!=3.14.1,>=3.11",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlepaddle",
+            "requirement": "networkx"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "networkx-3.6.1.dist-info/licenses/LICENSE.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "numpy",
+      "version": "2.2.6",
+      "filename": "numpy-2.2.6-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/cb/3b/d58c12eafcb298d4e6d0d40216866ab15f59e55d148a5658bb3132311fcf/numpy-2.2.6-cp313-cp313-win_amd64.whl",
+      "size": 12610885,
+      "sha256": "b0544343a702fa80c95ad5d3d608ea3599dd54d4632df855e4c8d24eb6ecfa1c",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "direct",
+        "direct_requirement": "numpy==2.2.6",
+        "required_by": [
+          {
+            "name": "opencv-contrib-python",
+            "requirement": "numpy >=1.17.0 ; python_version >= \"3.7\""
+          },
+          {
+            "name": "opencv-contrib-python",
+            "requirement": "numpy >=1.17.3 ; python_version >= \"3.8\""
+          },
+          {
+            "name": "opencv-contrib-python",
+            "requirement": "numpy >=1.19.3 ; python_version >= \"3.9\""
+          },
+          {
+            "name": "opencv-contrib-python",
+            "requirement": "numpy >=1.21.2 ; python_version >= \"3.10\""
+          },
+          {
+            "name": "opencv-contrib-python",
+            "requirement": "numpy >=1.23.5 ; python_version >= \"3.11\""
+          },
+          {
+            "name": "opencv-contrib-python",
+            "requirement": "numpy >=1.26.0 ; python_version >= \"3.12\""
+          },
+          {
+            "name": "opt-einsum",
+            "requirement": "numpy (>=1.7)"
+          },
+          {
+            "name": "paddlepaddle",
+            "requirement": "numpy>=1.21"
+          },
+          {
+            "name": "paddlex",
+            "requirement": "numpy<2.4,>=1.24"
+          },
+          {
+            "name": "pandas",
+            "requirement": "numpy>=1.26.0; python_version < \"3.14\""
+          },
+          {
+            "name": "shapely",
+            "requirement": "numpy>=1.21"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause AND MIT AND Zlib AND BSD-3-Clause-Attribution AND GPL-3.0-only WITH GCC-exception-3.1",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "numpy-2.2.6.dist-info/LICENSE.txt",
+            "numpy/_core/include/numpy/random/LICENSE.txt",
+            "numpy/ma/LICENSE",
+            "numpy/random/LICENSE.md"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "opencv-contrib-python",
+      "version": "4.10.0.84",
+      "filename": "opencv_contrib_python-4.10.0.84-cp37-abi3-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/a7/9e/7110d2c5d543ab03b9581dbb1f8e2429863e44e0c9b4960b766f230c1279/opencv_contrib_python-4.10.0.84-cp37-abi3-win_amd64.whl",
+      "size": 45541421,
+      "sha256": "47ec3160dae75f70e099b286d1a2e086d20dac8b06e759f60eaf867e6bdecba7",
+      "wheel_tags": [
+        "cp37-abi3-win_amd64"
+      ],
+      "requires_python": ">=3.6",
+      "selected_extras": [],
+      "source": {
+        "kind": "direct",
+        "direct_requirement": "opencv-contrib-python==4.10.0.84",
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "opencv-contrib-python==4.10.0.84; extra == \"ocr-core\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "cv2/LICENSE-3RD-PARTY.txt",
+            "cv2/LICENSE.txt",
+            "opencv_contrib_python-4.10.0.84.dist-info/LICENSE-3RD-PARTY.txt",
+            "opencv_contrib_python-4.10.0.84.dist-info/LICENSE.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "opt-einsum",
+      "version": "3.3.0",
+      "filename": "opt_einsum-3.3.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/bc/19/404708a7e54ad2798907210462fd950c3442ea51acc8790f3da48d2bee8b/opt_einsum-3.3.0-py3-none-any.whl",
+      "size": 65486,
+      "sha256": "2455e59e3947d3c275477df7f5205b30635e266fe6dc300e3d9f9646bfcea147",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.5",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlepaddle",
+            "requirement": "opt-einsum==3.3.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "opt_einsum-3.3.0.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "packaging",
+      "version": "26.2",
+      "filename": "packaging-26.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/df/b2/87e62e8c3e2f4b32e5fe99e0b86d576da1312593b39f47d8ceef365e95ed/packaging-26.2-py3-none-any.whl",
+      "size": 100195,
+      "sha256": "5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "huggingface-hub",
+            "requirement": "packaging>=20.9"
+          },
+          {
+            "name": "modelscope",
+            "requirement": "packaging"
+          },
+          {
+            "name": "paddlex",
+            "requirement": "packaging"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0 OR BSD-2-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "packaging-26.2.dist-info/licenses/LICENSE",
+            "packaging-26.2.dist-info/licenses/LICENSE.APACHE",
+            "packaging-26.2.dist-info/licenses/LICENSE.BSD"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "paddleocr",
+      "version": "3.7.0",
+      "filename": "paddleocr-3.7.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/d2/79/2ade66cf72074a3d2a013e2ba1f256d6116fec797b908fc1b4f9c320d8c4/paddleocr-3.7.0-py3-none-any.whl",
+      "size": 146750,
+      "sha256": "c0f0a81ad4112727f30c6fcf986ac0ef6a120d31ee0991a01fae0357ee32d338",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "direct",
+        "direct_requirement": "paddleocr==3.7.0",
+        "required_by": []
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "paddleocr-3.7.0.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [
+            "paddleocr-v3.7.0-license"
+          ],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "paddlepaddle",
+      "version": "3.3.1",
+      "filename": "paddlepaddle-3.3.1-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/f4/c8/408b9e94ac2e10a55c1122b787359f7a6f79ef894ee1d57d78c5cca838d0/paddlepaddle-3.3.1-cp313-cp313-win_amd64.whl",
+      "size": 104794530,
+      "sha256": "1203e2e1114b49e73a8440b68837ce5c93fdab51fe4838c5e5874ab40f58f747",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": null,
+      "selected_extras": [],
+      "source": {
+        "kind": "direct",
+        "direct_requirement": "paddlepaddle==3.3.1",
+        "required_by": []
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": null,
+        "status": "pending",
+        "evidence": {
+          "status": "partial",
+          "embedded_paths": [
+            "paddlepaddle-3.3.1.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [
+            "paddlepaddle-v3.3.1-license",
+            "paddlepaddle-mklml-license",
+            "paddlepaddle-onednn-license",
+            "paddlepaddle-warpctc-license",
+            "paddlepaddle-warprnnt-license"
+          ],
+          "notes": [
+            "Bundled MKLML, oneDNN, MinGW runtimes, BLAS/LAPACK, warp-ctc and warp-transducer notices are not yet complete."
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "paddlex",
+      "version": "3.7.2",
+      "filename": "paddlex-3.7.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/40/52/9bbb9cd5f4fbbbefc7391c7d1ee61df8d511017a31e6933f6744b063fdab/paddlex-3.7.2-py3-none-any.whl",
+      "size": 2239708,
+      "sha256": "f1678bf650bbaccfd8f0d4e49d0ae631b4685c829fdae6e802ccd90d4fcb9a7f",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [
+        "ocr-core"
+      ],
+      "source": {
+        "kind": "direct",
+        "direct_requirement": "paddlex[ocr-core]==3.7.2",
+        "required_by": [
+          {
+            "name": "paddleocr",
+            "requirement": "paddlex[ocr-core]<3.8.0,>=3.7.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "paddlex-3.7.2.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [
+            "paddlex-v3.7.2-license"
+          ],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pandas",
+      "version": "3.0.5",
+      "filename": "pandas-3.0.5-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/9c/ba/18c4ec8a746e177da05a9e7a7963781d8ea195780724f854601b6ebd6b78/pandas-3.0.5-cp313-cp313-win_amd64.whl",
+      "size": 9826896,
+      "sha256": "0d298e951f23016ce4699951d044ae6418dbc91bf68cefca0f77666fcbb4e5c6",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.11",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "pandas>=1.3"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "pandas-3.0.5.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pillow",
+      "version": "12.3.0",
+      "filename": "pillow-12.3.0-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/a6/9b/7a58e61d62be561da3a356fe2384d4059a6345fc130e23ef1c36a5b81d24/pillow-12.3.0-cp313-cp313-win_amd64.whl",
+      "size": 7239691,
+      "sha256": "1cca606cd25738df4ed873d5ad46bbdb3d83b5cbca291f6b4ff13a4df6b0bbe8",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlepaddle",
+            "requirement": "Pillow"
+          },
+          {
+            "name": "paddlex",
+            "requirement": "pillow"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT-CMU",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "pillow-12.3.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "prettytable",
+      "version": "3.18.0",
+      "filename": "prettytable-3.18.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/fe/be/2e6798ace5cc036f5d05d36b7b2fd85346f1a708c87060890b070d0ec607/prettytable-3.18.0-py3-none-any.whl",
+      "size": 37357,
+      "sha256": "b3346e0e6f79180833aebaac088ae926340586cf6d7d991b9eb125b65f72313a",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aistudio-sdk",
+            "requirement": "prettytable"
+          },
+          {
+            "name": "paddlex",
+            "requirement": "prettytable"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "prettytable-3.18.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "propcache",
+      "version": "0.5.2",
+      "filename": "propcache-0.5.2-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/1c/fd/3f0f10dba4dabad3bf53102be007abf55481067952bde0fdddff439e7c61/propcache-0.5.2-cp313-cp313-win_amd64.whl",
+      "size": 41649,
+      "sha256": "dfed59d0a5aeb01e242e66ff0300bc4a265a7c05f612d30016f0b60b1017d757",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aiohttp",
+            "requirement": "propcache>=0.2.0"
+          },
+          {
+            "name": "yarl",
+            "requirement": "propcache>=0.2.1"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "propcache-0.5.2.dist-info/licenses/LICENSE",
+            "propcache-0.5.2.dist-info/licenses/NOTICE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "protobuf",
+      "version": "7.35.1",
+      "filename": "protobuf-7.35.1-cp310-abi3-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/0a/19/8d0cb6f20a1ef7b18f1c8986ad5783f22f84cce39c6ce9a6e645ea55192e/protobuf-7.35.1-cp310-abi3-win_amd64.whl",
+      "size": 439996,
+      "sha256": "230a75ddfc2de4806e56696ce9640c1cdfdb6543b7cfce98d42a4c0a0e7bdb87",
+      "wheel_tags": [
+        "cp310-abi3-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlepaddle",
+            "requirement": "protobuf>=3.20.2"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": null,
+        "status": "pending",
+        "evidence": {
+          "status": "partial",
+          "embedded_paths": [
+            "protobuf-7.35.1.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": [
+            "Native abi3 wheel carries the protobuf license, but bundled/static native dependency notices have not been independently inventoried."
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "filename": "psutil-7.2.2-cp37-abi3-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/b4/90/e2159492b5426be0c1fef7acba807a03511f97c5f86b3caeda6ad92351a7/psutil-7.2.2-cp37-abi3-win_amd64.whl",
+      "size": 137737,
+      "sha256": "eb7e81434c8d223ec4a219b5fc1c47d0417b12be7ea866e24fb5ad6e84b3d988",
+      "wheel_tags": [
+        "cp37-abi3-win_amd64"
+      ],
+      "requires_python": ">=3.6",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aistudio-sdk",
+            "requirement": "psutil"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "psutil-7.2.2.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "py-cpuinfo",
+      "version": "9.0.0",
+      "filename": "py_cpuinfo-9.0.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/e0/a9/023730ba63db1e494a271cb018dcd361bd2c917ba7004c3e49d5daf795a2/py_cpuinfo-9.0.0-py3-none-any.whl",
+      "size": 22335,
+      "sha256": "859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": null,
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "py-cpuinfo"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "py_cpuinfo-9.0.0.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pyclipper",
+      "version": "1.4.0",
+      "filename": "pyclipper-1.4.0-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/ba/42/0a1920d276a0e1ca21dc0d13ee9e3ba10a9a8aa3abac76cd5e5a9f503306/pyclipper-1.4.0-cp313-cp313-win_amd64.whl",
+      "size": 104007,
+      "sha256": "d4b2d7c41086f1927d14947c563dfc7beed2f6c0d9af13c42fe3dcdc20d35832",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "pyclipper; extra == \"ocr-core\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "pyclipper-1.4.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pycryptodome",
+      "version": "3.23.0",
+      "filename": "pycryptodome-3.23.0-cp37-abi3-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/54/2f/e97a1b8294db0daaa87012c24a7bb714147c7ade7656973fd6c736b484ff/pycryptodome-3.23.0-cp37-abi3-win_amd64.whl",
+      "size": 1799636,
+      "sha256": "c75b52aacc6c0c260f204cbdd834f76edc9fb0d8e0da9fbf8352ef58202564e2",
+      "wheel_tags": [
+        "cp37-abi3-win_amd64"
+      ],
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "bce-python-sdk",
+            "requirement": "pycryptodome>=3.8.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-2-Clause AND LicenseRef-Public-Domain",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "pycryptodome-3.23.0.dist-info/AUTHORS.rst",
+            "pycryptodome-3.23.0.dist-info/LICENSE.rst"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.4",
+      "filename": "pydantic-2.13.4-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/fd/7b/122376b1fd3c62c1ed9dc80c931ace4844b3c55407b6fb2d199377c9736f/pydantic-2.13.4-py3-none-any.whl",
+      "size": 472262,
+      "sha256": "45a282cde31d808236fd7ea9d919b128653c8b38b393d1c4ab335c62924d9aba",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "pydantic>=2"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "pydantic-2.13.4.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pydantic-core",
+      "version": "2.46.4",
+      "filename": "pydantic_core-2.46.4-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/7e/e8/cff247591966f2d22ec8c003cd7587e27b7ba7b81ab2fb888e3ab75dc285/pydantic_core-2.46.4-cp313-cp313-win_amd64.whl",
+      "size": 2071819,
+      "sha256": "6b3ace8194b0e5204818c92802dcdca7fc6d88aabbb799d7c795540d9cd6d292",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "pydantic",
+            "requirement": "pydantic-core==2.46.4"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": null,
+        "status": "pending",
+        "evidence": {
+          "status": "partial",
+          "embedded_paths": [
+            "pydantic_core-2.46.4.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": [
+            "Native Rust wheel contains only the project MIT text; statically linked crate notices have not been inventoried."
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pypdfium2",
+      "version": "5.12.1",
+      "filename": "pypdfium2-5.12.1-py3-none-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/a9/c3/08b62718faf2f6b6aa49207626e3113ff3ec1b3cd076c0ef8fd852f0e57c/pypdfium2-5.12.1-py3-none-win_amd64.whl",
+      "size": 3859845,
+      "sha256": "9609be73a6701a68f29dffe0335f7a2e4b3ba581542ed65d35d49f761a4600ca",
+      "wheel_tags": [
+        "py3-none-win_amd64"
+      ],
+      "requires_python": ">= 3.6",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "pypdfium2>=4; extra == \"ocr-core\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause AND Apache-2.0 AND CC-BY-4.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "pypdfium2-5.12.1.dist-info/licenses/LICENSES/Apache-2.0.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/LICENSES/BSD-3-Clause.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/LICENSES/CC-BY-4.0.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/abseil.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/agg23.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/fast_float.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/freetype.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/icu.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/lcms.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libjpeg_turbo.ijg",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libjpeg_turbo.md",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libopenjpeg.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libpng.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libtiff.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/llvm-libc.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/pdfium-binaries.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/pdfium.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/simdutf.txt",
+            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/zlib.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pyside6-essentials",
+      "version": "6.11.1",
+      "filename": "pyside6_essentials-6.11.1-cp310-abi3-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/64/0e/b663ecc96ca57b5c91b83b6615d6b174380b0faf30338125c26e053d6aa7/pyside6_essentials-6.11.1-cp310-abi3-win_amd64.whl",
+      "size": 77549267,
+      "sha256": "63311bd48e32c584599ab04b9ef7c324082374cd2c9fa533f978fb893bb47e40",
+      "wheel_tags": [
+        "cp310-abi3-win_amd64"
+      ],
+      "requires_python": "<3.15,>=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "direct",
+        "direct_requirement": "PySide6-Essentials==6.11.1",
+        "required_by": []
+      },
+      "license": {
+        "expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+        "redistributable": null,
+        "status": "pending",
+        "evidence": {
+          "status": "partial",
+          "embedded_paths": [
+            "pyside6_essentials-6.11.1.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
+          ],
+          "external_evidence_ids": [
+            "pyside-v6.11.1-lgpl-3.0",
+            "pyside-v6.11.1-gpl-2.0",
+            "pyside-v6.11.1-gpl-3.0",
+            "msvc-runtime-2015-2022-terms",
+            "msvc-runtime-redistribution-guidance"
+          ],
+          "notes": [
+            "Wheel carries only LicenseRef-Qt-Commercial; open-source Qt module/plugin notices and Microsoft runtime redistribution evidence are incomplete."
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "python-bidi",
+      "version": "0.6.11",
+      "filename": "python_bidi-0.6.11-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/85/0a/7ac8da3629ca8d93a419f5250c240fc13f7d34b7c04f279c8f9a474a2be9/python_bidi-0.6.11-cp313-cp313-win_amd64.whl",
+      "size": 160888,
+      "sha256": "f563d20481f7d316adf605bb94d5b7182acecdbc4d431d60473e9b1d526d0210",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "python-bidi; extra == \"ocr-core\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "LGPL-3.0-only",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "python_bidi-0.6.11.dist-info/licenses/AUTHORS.rst",
+            "python_bidi-0.6.11.dist-info/licenses/COPYING",
+            "python_bidi-0.6.11.dist-info/licenses/COPYING.LESSER",
+            "python_bidi-0.6.11.dist-info/licenses/LICENSE-THIRD-PARTY.yml"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "filename": "python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+      "size": 229892,
+      "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427",
+      "wheel_tags": [
+        "py2-none-any",
+        "py3-none-any"
+      ],
+      "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "pandas",
+            "requirement": "python-dateutil>=2.8.2"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0 OR BSD-3-Clause",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "python_dateutil-2.9.0.post0.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "pyyaml",
+      "version": "6.0.2",
+      "filename": "PyYAML-6.0.2-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/fa/de/02b54f42487e3d3c6efb3f89428677074ca7bf43aae402517bc7cca949f3/PyYAML-6.0.2-cp313-cp313-win_amd64.whl",
+      "size": 156446,
+      "sha256": "8388ee1976c416731879ac16da0aff3f63b286ffdd57cdeb95f3f2e085687563",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "huggingface-hub",
+            "requirement": "pyyaml>=5.1"
+          },
+          {
+            "name": "paddleocr",
+            "requirement": "PyYAML>=6"
+          },
+          {
+            "name": "paddlex",
+            "requirement": "PyYAML==6.0.2"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "PyYAML-6.0.2.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "filename": "requests-2.34.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+      "size": 73075,
+      "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aistudio-sdk",
+            "requirement": "requests"
+          },
+          {
+            "name": "modelscope",
+            "requirement": "requests>=2.25"
+          },
+          {
+            "name": "modelscope-hub",
+            "requirement": "requests>=2.28"
+          },
+          {
+            "name": "paddleocr",
+            "requirement": "requests"
+          },
+          {
+            "name": "paddlex",
+            "requirement": "requests"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "requests-2.34.2.dist-info/licenses/LICENSE",
+            "requests-2.34.2.dist-info/licenses/NOTICE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "ruamel-yaml",
+      "version": "0.19.1",
+      "filename": "ruamel_yaml-0.19.1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/b8/0c/51f6841f1d84f404f92463fc2b1ba0da357ca1e3db6b7fbda26956c3b82a/ruamel_yaml-0.19.1-py3-none-any.whl",
+      "size": 118102,
+      "sha256": "27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "ruamel.yaml"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "ruamel_yaml-0.19.1.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "filename": "safetensors-0.8.0-cp310-abi3-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/1b/6d/3fba214c1e5e0f69991677ec3bc17023f0421776975e1de0c682dca475e2/safetensors-0.8.0-cp310-abi3-win_amd64.whl",
+      "size": 355540,
+      "sha256": "096ec1a98435df7beb08853bb5aa9081a84f23d0adc67ed1a0a10550f608373f",
+      "wheel_tags": [
+        "cp310-abi3-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlepaddle",
+            "requirement": "safetensors>=0.6.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": null,
+        "status": "pending",
+        "evidence": {
+          "status": "partial",
+          "embedded_paths": [
+            "safetensors-0.8.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": [
+            "Native Rust wheel contains only the project Apache-2.0 text; statically linked crate notices have not been inventoried."
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "setuptools",
+      "version": "83.0.0",
+      "filename": "setuptools-83.0.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/5d/40/e1e72872c6354b306daef1703549e8e83b4d43cfea356311bf722a043752/setuptools-83.0.0-py3-none-any.whl",
+      "size": 1008090,
+      "sha256": "29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "modelscope",
+            "requirement": "setuptools"
+          },
+          {
+            "name": "paddlepaddle",
+            "requirement": "setuptools; python_version >= \"3.12\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "setuptools-83.0.0.dist-info/licenses/LICENSE",
+            "setuptools/_vendor/autocommand-2.2.2.dist-info/LICENSE",
+            "setuptools/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
+            "setuptools/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
+            "setuptools/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
+            "setuptools/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
+            "setuptools/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
+            "setuptools/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
+            "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
+            "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
+            "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
+            "setuptools/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
+            "setuptools/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
+            "setuptools/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
+            "setuptools/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
+            "setuptools/config/NOTICE",
+            "setuptools/config/_validate_pyproject/NOTICE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "shapely",
+      "version": "2.1.2",
+      "filename": "shapely-2.1.2-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/41/47/3647fe7ad990af60ad98b889657a976042c9988c2807cf322a9d6685f462/shapely-2.1.2-cp313-cp313-win_amd64.whl",
+      "size": 1722151,
+      "sha256": "ca2591bff6645c216695bdf1614fca9c82ea1144d4a7591a466fef64f28f0715",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "shapely; extra == \"ocr-core\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause AND LGPL-2.1-or-later",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "shapely-2.1.2.dist-info/licenses/LICENSE.txt",
+            "shapely-2.1.2.dist-info/licenses/LICENSE_GEOS",
+            "shapely-2.1.2.dist-info/licenses/LICENSE_win32"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "shiboken6",
+      "version": "6.11.1",
+      "filename": "shiboken6-6.11.1-cp310-abi3-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/52/b5/3f6fb2ee65b534193fb4ef713dd619dc31dadff5d12c16979a7699ad58be/shiboken6-6.11.1-cp310-abi3-win_amd64.whl",
+      "size": 1223647,
+      "sha256": "c2c6863aa80ec18c0f82cea3417837b279cdc60024ac17123461dc9042577df7",
+      "wheel_tags": [
+        "cp310-abi3-win_amd64"
+      ],
+      "requires_python": "<3.15,>=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "pyside6-essentials",
+            "requirement": "shiboken6==6.11.1"
+          }
+        ]
+      },
+      "license": {
+        "expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+        "redistributable": null,
+        "status": "pending",
+        "evidence": {
+          "status": "partial",
+          "embedded_paths": [
+            "shiboken6-6.11.1.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
+          ],
+          "external_evidence_ids": [
+            "pyside-v6.11.1-lgpl-3.0",
+            "pyside-v6.11.1-gpl-2.0",
+            "pyside-v6.11.1-gpl-3.0",
+            "msvc-runtime-2015-2022-terms",
+            "msvc-runtime-redistribution-guidance"
+          ],
+          "notes": [
+            "Wheel carries only LicenseRef-Qt-Commercial; open-source Shiboken/Qt notices and Microsoft runtime redistribution evidence are incomplete."
+          ]
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "filename": "six-1.17.0-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl",
+      "size": 11050,
+      "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274",
+      "wheel_tags": [
+        "py2-none-any",
+        "py3-none-any"
+      ],
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "bce-python-sdk",
+            "requirement": "six>=1.4.0"
+          },
+          {
+            "name": "python-dateutil",
+            "requirement": "six >=1.5"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "six-1.17.0.dist-info/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "tqdm",
+      "version": "4.69.1",
+      "filename": "tqdm-4.69.1-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/01/50/5817619a0fca56aff06383dbfde7ae017b3ca383915b3f1e4713164273cf/tqdm-4.69.1-py3-none-any.whl",
+      "size": 675452,
+      "sha256": "0a654b96f7a2660cceb615b56f307ec2bef96c515409014a429a561981ab52b4",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aistudio-sdk",
+            "requirement": "tqdm"
+          },
+          {
+            "name": "huggingface-hub",
+            "requirement": "tqdm>=4.42.1"
+          },
+          {
+            "name": "modelscope",
+            "requirement": "tqdm>=4.64.0"
+          },
+          {
+            "name": "modelscope-hub",
+            "requirement": "tqdm>=4.64.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MPL-2.0 AND MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "tqdm-4.69.1.dist-info/licenses/LICENCE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "filename": "typing_extensions-4.16.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
+      "size": 45571,
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "huggingface-hub",
+            "requirement": "typing-extensions>=4.1.0"
+          },
+          {
+            "name": "paddleocr",
+            "requirement": "typing-extensions>=4.12"
+          },
+          {
+            "name": "paddlepaddle",
+            "requirement": "typing-extensions"
+          },
+          {
+            "name": "paddlex",
+            "requirement": "typing-extensions"
+          },
+          {
+            "name": "pydantic",
+            "requirement": "typing-extensions>=4.14.1"
+          },
+          {
+            "name": "pydantic-core",
+            "requirement": "typing-extensions>=4.14.1"
+          },
+          {
+            "name": "typing-inspection",
+            "requirement": "typing-extensions>=4.12.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "PSF-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "typing_extensions-4.16.0.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.2",
+      "filename": "typing_inspection-0.4.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/dc/9b/47798a6c91d8bdb567fe2698fe81e0c6b7cb7ef4d13da4114b41d239f65d/typing_inspection-0.4.2-py3-none-any.whl",
+      "size": 14611,
+      "sha256": "4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.9",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "pydantic",
+            "requirement": "typing-inspection>=0.4.2"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "typing_inspection-0.4.2.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "tzdata",
+      "version": "2026.3",
+      "filename": "tzdata-2026.3-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/e5/6d/b53b99a9f2766d095985947a5782f1702cabb129a34f7a802d7197af832f/tzdata-2026.3-py2.py3-none-any.whl",
+      "size": 348168,
+      "sha256": "dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931",
+      "wheel_tags": [
+        "py2-none-any",
+        "py3-none-any"
+      ],
+      "requires_python": ">=2",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "pandas",
+            "requirement": "tzdata; sys_platform == \"win32\""
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "tzdata-2026.3.dist-info/licenses/LICENSE",
+            "tzdata-2026.3.dist-info/licenses/licenses/LICENSE_APACHE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "ujson",
+      "version": "5.13.0",
+      "filename": "ujson-5.13.0-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/b4/b5/1fe203bc294e98fdd65606883692ad8dc0aaac73838b89c99c3513404424/ujson-5.13.0-cp313-cp313-win_amd64.whl",
+      "size": 41098,
+      "sha256": "17a59d5cf23ef98f7c9314524976b4b288374d83200add01d953024fb06404f9",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "paddlex",
+            "requirement": "ujson"
+          }
+        ]
+      },
+      "license": {
+        "expression": "BSD-3-Clause AND TCL",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "ujson-5.13.0.dist-info/licenses/LICENSE.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "urllib3",
+      "version": "2.7.0",
+      "filename": "urllib3-2.7.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl",
+      "size": 131087,
+      "sha256": "9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "modelscope",
+            "requirement": "urllib3>=1.26"
+          },
+          {
+            "name": "modelscope-hub",
+            "requirement": "urllib3>=1.26"
+          },
+          {
+            "name": "requests",
+            "requirement": "urllib3<3,>=1.26"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "urllib3-2.7.0.dist-info/licenses/LICENSE.txt"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "wcwidth",
+      "version": "0.8.2",
+      "filename": "wcwidth-0.8.2-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/96/42/3e5985a0a7e57de470b320c6d6a1a67c844f6737a587f3d44dd13d1819e7/wcwidth-0.8.2-py3-none-any.whl",
+      "size": 323166,
+      "sha256": "d63947694a0539a1d51e01eda7caf800c291020e6cdd7e28ad7b14dd33ad4f85",
+      "wheel_tags": [
+        "py3-none-any"
+      ],
+      "requires_python": ">=3.8",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "prettytable",
+            "requirement": "wcwidth>=0.3.5"
+          }
+        ]
+      },
+      "license": {
+        "expression": "MIT",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "wcwidth-0.8.2.dist-info/licenses/LICENSE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "yarl",
+      "version": "1.24.5",
+      "filename": "yarl-1.24.5-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/86/e4/62a06b7e87c4246ac76b7c2da136f972eb4a3a1fc94abb07e7022d6fdb0a/yarl-1.24.5-cp313-cp313-win_amd64.whl",
+      "size": 97454,
+      "sha256": "2dbe06fc16bc91502bca713704022182e5729861ae00277c3a23354b40929740",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.10",
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "aiohttp",
+            "requirement": "yarl<2.0,>=1.17.0"
+          }
+        ]
+      },
+      "license": {
+        "expression": "Apache-2.0",
+        "redistributable": true,
+        "status": "verified",
+        "evidence": {
+          "status": "embedded",
+          "embedded_paths": [
+            "yarl-1.24.5.dist-info/licenses/LICENSE",
+            "yarl-1.24.5.dist-info/licenses/NOTICE"
+          ],
+          "external_evidence_ids": [],
+          "notes": []
+        }
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-07-25"
+      }
+    }
+  ]
+}

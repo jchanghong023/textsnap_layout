@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "textsnap-layout"
+version = "0.1.0"
+description = "Offline Windows screenshot OCR with layout-preserving plain text output"
+readme = "README.zh-CN.md"
+requires-python = ">=3.12"
+authors = [{ name = "TextSnap Layout contributors" }]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+  "integration: requires pinned Paddle runtime and local OCR models",
+  "windows: requires a Windows 11 x64 host",
+]

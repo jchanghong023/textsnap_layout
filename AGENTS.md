@@ -3,7 +3,8 @@
 ## 项目状态与事实来源
 
 - 本仓库用于实现 Windows 11 x64 离线截图 OCR 工具 TextSnap Layout。
-- 当前处于实施前阶段：仓库尚无项目代码、依赖清单、测试或构建脚本。
+- 当前已完成计划范围内的应用代码、测试、依赖锁和跨平台静态构建流水线；最终
+  发布仍受下述合规门禁及 Windows 11 x64 实机验收约束。
 - 开始任何实现前，完整阅读根目录的 `IMPLEMENTATION_PLAN.md`。该文档是当前产品范围、架构、接口、实施顺序和验收要求的事实来源。
 - 本文件只提炼协作约束，不替代实施计划。若二者出现实质冲突，停止实施并向用户确认，不得自行改写既定产品决策。
 - 不因初始化、整理文档或处理单个阶段而提前创建无关代码和配置。
@@ -65,9 +66,20 @@
 
 ## 当前命令约定
 
-- 当前尚未建立依赖、测试和构建入口，因此没有可声明为有效的项目命令。
-- 创建项目骨架时，应同时提供清晰、非交互、可重复执行的测试和构建入口，并在本节记录经实际运行确认的命令。
-- 在命令建立前，不得假定 `pytest`、打包脚本或系统工具已经安装；先检查仓库配置和执行环境。
+- ARM64 Linux 纯 Python 与静态回归：
+  `PYTHONPATH=src python3 -B -m unittest discover -s tests -v`
+- 安装 PySide6 Essentials 6.11.1 与 NumPy 2.2.6 后的 Qt 回归：
+  `QT_QPA_PLATFORM=offscreen PYTHONPATH=src python3 -B -m unittest tests.test_qt_instance tests.test_qt_worker tests.test_ui_widgets tests.test_controller -v`
+- 真实 OCR 回归及所需环境变量见 `README.zh-CN.md`；ARM64 兼容性结果不能替代
+  Windows x64 原生验收。
+- 非交互构建入口为 `python3 -B -m scripts.build_release`，支持
+  `validate-lock`、`fetch`、`validate-wheel-closure`、`stage`、`verify`、
+  `package` 和 `all`；参数及执行顺序见 `README.zh-CN.md`。
+- 当前许可证门禁未通过，只允许
+  `stage --profile nonredistributable-test` 和后续 `verify`；`package` 必须失败且
+  不得生成最终 ZIP。
+- 命令依赖的 PySide6、Paddle、精确 CPython 3.13.14、MinGW、缓存、模型和字体
+  不得假定已安装；执行前按 `README.zh-CN.md` 检查实际环境。
 
 ## 完成标准
 

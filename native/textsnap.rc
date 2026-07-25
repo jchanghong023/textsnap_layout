@@ -1,0 +1,32 @@
+#include <windows.h>
+
+1 ICON "textsnap.ico"
+1 RT_MANIFEST "TextSnapLayout.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,1,0,0
+ PRODUCTVERSION 0,1,0,0
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904b0"
+    BEGIN
+      VALUE "CompanyName", "TextSnap Layout contributors\0"
+      VALUE "FileDescription", "TextSnap Layout offline OCR\0"
+      VALUE "FileVersion", "0.1.0.0\0"
+      VALUE "InternalName", "TextSnapLayout\0"
+      VALUE "OriginalFilename", "TextSnapLayout.exe\0"
+      VALUE "ProductName", "TextSnap Layout\0"
+      VALUE "ProductVersion", "0.1.0.0\0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0409, 1200
+  END
+END

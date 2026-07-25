@@ -1,0 +1,355 @@
+{
+  "schema_version": "1.0.0",
+  "policy": {
+    "scope": "TextSnap Layout Windows x64 redistributable ZIP",
+    "status_definitions": {
+      "verified": "The exact artifact has verifiable package-license evidence and no known unresolved redistribution evidence in the current audit scope.",
+      "pending": "Some license evidence or third-party native notice remains unresolved. The artifact may be used for development and testing but must not pass a redistributable release gate.",
+      "blocked": "Redistribution evidence is absent or explicitly unacceptable. The artifact must not be included in a redistributable release."
+    },
+    "release_gate": {
+      "allowed_statuses": [
+        "verified"
+      ],
+      "failing_statuses": [
+        "pending",
+        "blocked"
+      ],
+      "require_redistributable_true": true,
+      "require_all_evidence_ids_resolved": true,
+      "require_external_evidence_sha256": true,
+      "notes": [
+        "A successful download or package metadata license label alone is not sufficient to pass this gate.",
+        "The gate applies only to artifacts actually retained in the final ZIP, but an included dependency cannot be silently omitted from the lock."
+      ]
+    }
+  },
+  "external_evidence": [
+    {
+      "id": "aistudio-sdk-0.3.8-pypi-json",
+      "component": "aistudio-sdk",
+      "version": "0.3.8",
+      "kind": "publisher_release_metadata",
+      "expression": null,
+      "url": "https://pypi.org/pypi/aistudio-sdk/0.3.8/json",
+      "size": 2617,
+      "sha256": "e07c4903c25bf630546b2c4aba1852289fe91585ef15958690338302e5545e9a",
+      "status": "verified_content",
+      "relationship": "The version-specific PyPI JSON has null license, home_page and project_urls fields and exposes no source distribution."
+    },
+    {
+      "id": "bce-python-sdk-upstream-license",
+      "component": "bce-python-sdk",
+      "version": "0.9.76",
+      "kind": "publisher_upstream_license",
+      "expression": "Apache-2.0",
+      "url": "https://raw.githubusercontent.com/baidubce/bce-sdk-python/03a30630c4c6576b583f5a0c9da06e6d48440310/LICENSE",
+      "size": 10173,
+      "sha256": "0cec06e0e55fbc3dc5cee4fca9b607f66cb8f4e4dbcf3b3c013594dd156732e9",
+      "status": "verified_content",
+      "relationship": "Official publisher repository at an immutable commit. The 0.9.76 wheel and sdist omit a license file, while their metadata declares Apache License 2.0."
+    },
+    {
+      "id": "cpython-v3.13.14-license",
+      "component": "CPython",
+      "version": "3.13.14",
+      "kind": "publisher_upstream_license",
+      "expression": "PSF-2.0",
+      "url": "https://raw.githubusercontent.com/python/cpython/v3.13.14/LICENSE",
+      "size": 13809,
+      "sha256": "78b12c3a81360b357002334f0e70ea0e92eebf7a9b358805c03c48484945f3bb",
+      "status": "verified_content",
+      "relationship": "Official version tag. The embeddable archive's expanded LICENSE.txt is independently locked in resources.json."
+    },
+    {
+      "id": "msvc-runtime-2015-2022-terms",
+      "component": "Microsoft Visual C++ Runtime",
+      "version": "2015-2022",
+      "kind": "publisher_license_terms_html_snapshot",
+      "expression": "LicenseRef-Microsoft-Visual-Cpp-Runtime-2015-2022",
+      "url": "https://visualstudio.microsoft.com/license-terms/vs2022-cruntime/",
+      "size": 241689,
+      "sha256": "bfbf65ddfb5b0930bd94db2db8049c4404eff92f2610d68fde4b67565a873c92",
+      "status": "verified_content_mutable_url",
+      "relationship": "Official license-terms page. The content hash freezes the audited snapshot because the URL itself is mutable."
+    },
+    {
+      "id": "msvc-runtime-redistribution-guidance",
+      "component": "Microsoft Visual C++ Runtime",
+      "version": "MSVC v14",
+      "kind": "publisher_redistribution_guidance_html_snapshot",
+      "expression": null,
+      "url": "https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170",
+      "size": 60920,
+      "sha256": "abb6faf04c2924e5a15f6568965058bbcdceac09f9946fb997526c4734de48f8",
+      "status": "verified_content_mutable_url",
+      "relationship": "Official guidance states that redistributing the runtime package or individual binaries is subject to Microsoft license terms and licensed-user conditions."
+    },
+    {
+      "id": "noto-cjk-sans2.004-ofl",
+      "component": "Noto Sans Mono CJK SC",
+      "version": "Sans2.004",
+      "kind": "publisher_upstream_license",
+      "expression": "OFL-1.1",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/LICENSE",
+      "size": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "status": "verified_content",
+      "relationship": "Immutable commit behind release Sans2.004; byte-identical to LICENSE inside the locked font ZIP."
+    },
+    {
+      "id": "paddleocr-v3.7.0-license",
+      "component": "PaddleOCR",
+      "version": "3.7.0",
+      "kind": "publisher_upstream_license",
+      "expression": "Apache-2.0",
+      "url": "https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/v3.7.0/LICENSE",
+      "size": 11376,
+      "sha256": "3840c5c0c61c294264d2dd77b8777be6ddd90121ef4e0e64abcd22edea581d6e",
+      "status": "verified_content",
+      "relationship": "Official immutable version tag."
+    },
+    {
+      "id": "paddlepaddle-mklml-license",
+      "component": "PaddlePaddle bundled MKLML",
+      "version": "2019.0.5.20190502",
+      "kind": "publisher_dependency_archive_member",
+      "expression": "LicenseRef-Intel-Simplified-Software-License",
+      "url": "https://paddlepaddledeps.bj.bcebos.com/mklml_win_2019.0.5.20190502.zip",
+      "size": 29411961,
+      "sha256": "535857b17643d7f7546b58fc621244e7cfcc4fff2aa2ebd3fc5b4e126bfc36cf",
+      "status": "verified_content",
+      "relationship": "Paddle build commit 7688495538f4d6c1893f084dd238a402e8f68ab6 selects this archive.",
+      "member": {
+        "path": "mklml_win_2019.0.5.20190502/license.txt",
+        "size": 4413,
+        "sha256": "c50689a87e94a779ee875116405bdd75ad83c182465ea14fda0bded4d4486e86"
+      }
+    },
+    {
+      "id": "paddlepaddle-onednn-license",
+      "component": "oneDNN",
+      "version": "28d696724426b943e2f4a0e607f90cdc19aedaf6",
+      "kind": "upstream_dependency_license",
+      "expression": "Apache-2.0",
+      "url": "https://raw.githubusercontent.com/oneapi-src/oneDNN/28d696724426b943e2f4a0e607f90cdc19aedaf6/LICENSE",
+      "size": 11607,
+      "sha256": "9dad27256276bb4fce6725c162ef619b5aa2e8abc8f341a4dab0b870aad55664",
+      "status": "verified_content",
+      "relationship": "Exact Paddle submodule commit recorded by Paddle build commit 7688495538f4d6c1893f084dd238a402e8f68ab6."
+    },
+    {
+      "id": "paddlepaddle-v3.3.1-license",
+      "component": "PaddlePaddle",
+      "version": "3.3.1",
+      "kind": "publisher_upstream_license",
+      "expression": "Apache-2.0",
+      "url": "https://raw.githubusercontent.com/PaddlePaddle/Paddle/v3.3.1/LICENSE",
+      "size": 11438,
+      "sha256": "ff6311c56c1b22c9209c96cc8afc16da91c24ee55a15e14ebc46fe1960dbd856",
+      "status": "verified_content",
+      "relationship": "Official immutable version tag; the Windows wheel identifies build commit 7688495538f4d6c1893f084dd238a402e8f68ab6."
+    },
+    {
+      "id": "paddlepaddle-warpctc-license",
+      "component": "warp-ctc",
+      "version": "bdc2b4550453e0ef2d3b5190f9c6103a84eff184",
+      "kind": "upstream_dependency_license",
+      "expression": "Apache-2.0",
+      "url": "https://raw.githubusercontent.com/baidu-research/warp-ctc/bdc2b4550453e0ef2d3b5190f9c6103a84eff184/LICENSE",
+      "size": 11407,
+      "sha256": "67eabb03e6c7adac5044ecb78eea4ab55da9b9312ed48fe018dd73ecbc295d2d",
+      "status": "verified_content",
+      "relationship": "Exact Paddle submodule commit recorded by Paddle build commit 7688495538f4d6c1893f084dd238a402e8f68ab6."
+    },
+    {
+      "id": "paddlepaddle-warprnnt-license",
+      "component": "warp-transducer",
+      "version": "7ea6bfe748779c245a0fcaa5dd9383826273eff2",
+      "kind": "upstream_dependency_license",
+      "expression": "Apache-2.0",
+      "url": "https://raw.githubusercontent.com/PaddlePaddle/warp-transducer/7ea6bfe748779c245a0fcaa5dd9383826273eff2/LICENSE",
+      "size": 11350,
+      "sha256": "fab7b4805769f920d3061013453f90d77ecbffcb1e83bd63e896fb788d4ea966",
+      "status": "verified_content",
+      "relationship": "Exact Paddle submodule commit recorded by Paddle build commit 7688495538f4d6c1893f084dd238a402e8f68ab6."
+    },
+    {
+      "id": "paddlex-v3.7.2-license",
+      "component": "PaddleX",
+      "version": "3.7.2",
+      "kind": "publisher_upstream_license",
+      "expression": "Apache-2.0",
+      "url": "https://raw.githubusercontent.com/PaddlePaddle/PaddleX/v3.7.2/LICENSE",
+      "size": 11325,
+      "sha256": "accc36c817ac5ede473d05732e14afc11cb6e55ef5919bc826b653f631165043",
+      "status": "verified_content",
+      "relationship": "Official immutable version tag."
+    },
+    {
+      "id": "pp-ocrv6-medium-det-model-card",
+      "component": "PP-OCRv6_medium_det",
+      "version": "8e0f56fb2ef86b461d99cfc7ac5c137738985f61",
+      "kind": "publisher_model_card",
+      "expression": "Apache-2.0",
+      "url": "https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det/raw/8e0f56fb2ef86b461d99cfc7ac5c137738985f61/README.md",
+      "size": 23247,
+      "sha256": "59f37b08a9a49aa6c1275e7b0363991353582f4dc7676539a5d2b05aab57e744",
+      "status": "verified_content_relationship_pending",
+      "relationship": "Official same-name model card declares Apache-2.0, but its model files differ from the locked BOS tar bytes."
+    },
+    {
+      "id": "pp-ocrv6-medium-rec-model-card",
+      "component": "PP-OCRv6_medium_rec",
+      "version": "e5a92bcbc5cc1b494628e458d267778f0704fd7c",
+      "kind": "publisher_model_card",
+      "expression": "Apache-2.0",
+      "url": "https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec/raw/e5a92bcbc5cc1b494628e458d267778f0704fd7c/README.md",
+      "size": 23474,
+      "sha256": "75ff9c4853ed171f36224127805062f9bcd1cfbbcacae3d577344866df74f6d3",
+      "status": "verified_content_relationship_pending",
+      "relationship": "Official same-name model card declares Apache-2.0, but its model files differ from the locked BOS tar bytes."
+    },
+    {
+      "id": "pyside-v6.11.1-gpl-2.0",
+      "component": "PySide6 and Shiboken6",
+      "version": "6.11.1",
+      "kind": "publisher_upstream_license",
+      "expression": "GPL-2.0-only",
+      "url": "https://code.qt.io/cgit/pyside/pyside-setup.git/plain/LICENSES/GPL-2.0-only.txt?h=v6.11.1",
+      "size": 18092,
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+      "status": "verified_content_tagged_url",
+      "relationship": "Official PySide source tag v6.11.1 at commit 5d3fd824e2a3ee6af299749f482096d1ef3a2ac7."
+    },
+    {
+      "id": "pyside-v6.11.1-gpl-3.0",
+      "component": "PySide6 and Shiboken6",
+      "version": "6.11.1",
+      "kind": "publisher_upstream_license",
+      "expression": "GPL-3.0-only",
+      "url": "https://code.qt.io/cgit/pyside/pyside-setup.git/plain/LICENSES/GPL-3.0-only.txt?h=v6.11.1",
+      "size": 35147,
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "status": "verified_content_tagged_url",
+      "relationship": "Official PySide source tag v6.11.1 at commit 5d3fd824e2a3ee6af299749f482096d1ef3a2ac7."
+    },
+    {
+      "id": "pyside-v6.11.1-lgpl-3.0",
+      "component": "PySide6 and Shiboken6",
+      "version": "6.11.1",
+      "kind": "publisher_upstream_license",
+      "expression": "LGPL-3.0-only",
+      "url": "https://code.qt.io/cgit/pyside/pyside-setup.git/plain/LICENSES/LGPL-3.0-only.txt?h=v6.11.1",
+      "size": 7651,
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+      "status": "verified_content_tagged_url",
+      "relationship": "Official PySide source tag v6.11.1 at commit 5d3fd824e2a3ee6af299749f482096d1ef3a2ac7."
+    }
+  ],
+  "release_obligations": [
+    {
+      "id": "aistudio-sdk-license-missing",
+      "status": "blocked",
+      "blocks_release": true,
+      "components": [
+        "aistudio-sdk==0.3.8",
+        "paddlex==3.7.2"
+      ],
+      "evidence_ids": [
+        "aistudio-sdk-0.3.8-pypi-json"
+      ],
+      "reason": "PaddleX requires aistudio-sdk>=0.3.5 unconditionally and imports it at module load. Version 0.3.8 has UNKNOWN license metadata, no license file, no source distribution and no verifiable publisher project URL.",
+      "resolution_required": "Obtain publisher redistribution authorization or receive user approval to change and validate the dependency boundary. Until then, aistudio-sdk must not enter the final ZIP."
+    },
+    {
+      "id": "paddlepaddle-native-notices-incomplete",
+      "status": "pending",
+      "blocks_release": true,
+      "components": [
+        "paddlepaddle==3.3.1"
+      ],
+      "evidence_ids": [
+        "paddlepaddle-v3.3.1-license",
+        "paddlepaddle-mklml-license",
+        "paddlepaddle-onednn-license",
+        "paddlepaddle-warpctc-license",
+        "paddlepaddle-warprnnt-license"
+      ],
+      "reason": "The wheel bundles native libraries but has no complete unified third-party notice set.",
+      "resolution_required": "Inventory retained DLLs and complete verifiable notices for MinGW libgcc/libgfortran/libquadmath, BLAS/LAPACK and every other retained native component."
+    },
+    {
+      "id": "pyside-qt-notices-incomplete",
+      "status": "pending",
+      "blocks_release": true,
+      "components": [
+        "pyside6-essentials==6.11.1",
+        "shiboken6==6.11.1"
+      ],
+      "evidence_ids": [
+        "pyside-v6.11.1-lgpl-3.0",
+        "pyside-v6.11.1-gpl-2.0",
+        "pyside-v6.11.1-gpl-3.0"
+      ],
+      "reason": "Both wheels carry only LicenseRef-Qt-Commercial.txt even though package metadata advertises an LGPL/GPL choice.",
+      "resolution_required": "Choose and document an allowed Qt licensing path, inventory retained Qt DLLs/plugins, collect their third-party notices, and verify applicable LGPL distribution obligations."
+    },
+    {
+      "id": "msvc-runtime-redistribution-review",
+      "status": "pending",
+      "blocks_release": true,
+      "components": [
+        "CPython 3.13.14 embeddable runtime",
+        "pyside6-essentials==6.11.1",
+        "shiboken6==6.11.1"
+      ],
+      "evidence_ids": [
+        "msvc-runtime-2015-2022-terms",
+        "msvc-runtime-redistribution-guidance"
+      ],
+      "reason": "The artifacts contain multiple Microsoft runtime DLL versions, and Microsoft conditions redistribution on its license terms.",
+      "resolution_required": "Verify the distributor has the required rights, retain the applicable terms, and select DLLs only after PE dependency and Windows loading validation. Never deduplicate solely by basename."
+    },
+    {
+      "id": "bos-model-license-relationship",
+      "status": "pending",
+      "blocks_release": true,
+      "components": [
+        "PP-OCRv6_medium_det BOS tar",
+        "PP-OCRv6_medium_rec BOS tar"
+      ],
+      "evidence_ids": [
+        "paddleocr-v3.7.0-license",
+        "pp-ocrv6-medium-det-model-card",
+        "pp-ocrv6-medium-rec-model-card"
+      ],
+      "reason": "The exact BOS archives contain no license. Official same-name model cards say Apache-2.0, but their model files are not byte-identical.",
+      "resolution_required": "Obtain publisher evidence explicitly covering the locked BOS bytes or user-approved replacement artifacts with equally verified runtime behavior."
+    },
+    {
+      "id": "rust-native-third-party-notices",
+      "status": "pending",
+      "blocks_release": true,
+      "components": [
+        "hf-xet==1.5.2",
+        "pydantic-core==2.46.4",
+        "safetensors==0.8.0"
+      ],
+      "evidence_ids": [],
+      "reason": "These native Rust wheels carry their project license text but no complete inventory of statically linked crate notices.",
+      "resolution_required": "Build a version-specific Cargo dependency and license inventory from publisher sources, then collect all notices required by retained native code."
+    },
+    {
+      "id": "protobuf-native-third-party-notices",
+      "status": "pending",
+      "blocks_release": true,
+      "components": [
+        "protobuf==7.35.1"
+      ],
+      "evidence_ids": [],
+      "reason": "The abi3 wheel carries the protobuf license, but bundled or statically linked native dependency notices have not been independently inventoried.",
+      "resolution_required": "Audit the publisher build inputs for this exact wheel and collect any required third-party notices."
+    }
+  ]
+}
