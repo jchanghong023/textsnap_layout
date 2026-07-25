@@ -12,7 +12,6 @@ from typing import Any
 from scripts.release_pipeline import (
     PRODUCT_NAME,
     PRODUCT_VERSION,
-    LicenseGateError,
     LockSet,
     PipelineError,
     build_deterministic_zip,
@@ -76,8 +75,8 @@ def _stage_arguments(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--profile",
-        choices=("release", "nonredistributable-test"),
-        default="release",
+        choices=("private-use",),
+        default="private-use",
     )
 
 
@@ -125,10 +124,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     package = subparsers.add_parser(
         "package",
-        description=(
-            "Package only a saved profile=release staging whose mandatory "
-            "license gate passed"
-        ),
+        description="Package a saved profile=private-use staging",
     )
     _common_lock_argument(package)
     package.add_argument("--stage-dir", type=Path, required=True)
@@ -147,9 +143,7 @@ def _run(arguments: argparse.Namespace) -> dict[str, Any]:
         locks = LockSet.load(arguments.lock_dir)
         return {
             "lock": validate_lock_set(locks),
-            "fetched": fetch_locked_inputs(
-                locks, arguments.cache_dir.resolve(), include_evidence=True
-            ),
+            "fetched": fetch_locked_inputs(locks, arguments.cache_dir.resolve()),
         }
     if arguments.command == "validate-wheel-closure":
         return validate_wheel_closure(
@@ -174,20 +168,9 @@ def _run(arguments: argparse.Namespace) -> dict[str, Any]:
         return result
     if arguments.command == "all":
         locks = LockSet.load(arguments.lock_dir)
-        fetched = fetch_locked_inputs(
-            locks, arguments.cache_dir.resolve(), include_evidence=True
-        )
+        fetched = fetch_locked_inputs(locks, arguments.cache_dir.resolve())
         staged = _stage_from_arguments(arguments)
         result: dict[str, Any] = {"fetched": fetched, "staged": staged}
-        if arguments.profile == "nonredistributable-test":
-            result["package"] = {
-                "skipped": True,
-                "reason": (
-                    "nonredistributable-test profile is staging-only and can "
-                    "never invoke ZIP creation"
-                ),
-            }
-            return result
         output = (
             arguments.output_dir.resolve()
             / f"{PRODUCT_NAME}-{PRODUCT_VERSION}-win-x64.zip"
@@ -207,21 +190,6 @@ def main(argv: list[str] | None = None) -> int:
     arguments = parser.parse_args(argv)
     try:
         result = _run(arguments)
-    except LicenseGateError as exc:
-        print(
-            json.dumps(
-                {
-                    "ok": False,
-                    "error": "license-gate",
-                    "message": str(exc),
-                    "blockers": exc.blockers,
-                },
-                ensure_ascii=False,
-                sort_keys=True,
-            ),
-            file=sys.stderr,
-        )
-        return 3
     except (PipelineError, OSError, ValueError, subprocess.SubprocessError) as exc:
         print(
             json.dumps(

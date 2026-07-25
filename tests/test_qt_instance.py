@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import subprocess
+import sys
 import uuid
 import unittest
 from unittest import mock
@@ -25,10 +27,7 @@ class QtInstanceTests(unittest.TestCase):
     def test_primary_server_receives_exact_valid_command(self) -> None:
         from PySide6.QtCore import QEventLoop, QTimer
 
-        from textsnap.qt_instance import (
-            InstanceCommandServer,
-            send_instance_command,
-        )
+        from textsnap.qt_instance import InstanceCommandServer
 
         name = f"TextSnapLayout-test-{uuid.uuid4().hex}"
         server = InstanceCommandServer(server_name=name)
@@ -37,14 +36,30 @@ class QtInstanceTests(unittest.TestCase):
         server.start()
         self.addCleanup(server.close)
 
-        self.assertTrue(
-            send_instance_command(name and "open-settings", server_name=name)
+        sender = subprocess.Popen(
+            [
+                sys.executable,
+                "-B",
+                "-c",
+                (
+                    "from textsnap.qt_instance import send_instance_command;"
+                    "raise SystemExit(0 if send_instance_command("
+                    f"'open-settings', server_name={name!r}) else 1)"
+                ),
+            ],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self.addCleanup(
+            lambda: sender.kill() if sender.poll() is None else None
         )
         loop = QEventLoop()
         QTimer.singleShot(1000, loop.quit)
         server.command_received.connect(loop.quit)
         if not received:
             loop.exec()
+        self.assertEqual(sender.wait(timeout=1), 0)
         self.assertEqual(received, ["open-settings"])
 
     def test_invalid_send_arguments_are_rejected(self) -> None:

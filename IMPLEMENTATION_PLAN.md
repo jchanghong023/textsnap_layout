@@ -5,7 +5,7 @@
 - 在 ARM64 Linux 开发机上构建 `TextSnapLayout-0.1.0-win-x64.zip`。
 - 解压后双击根目录 `TextSnapLayout.exe` 即可运行，无需安装 Python、Paddle、VC++ 运行库或联网下载模型。
 - 首版只保证 Windows 11 x64、Intel i7-13700、CPU/AVX2/MKL 环境。
-- 使用原始 `PP-OCRv6_medium_det` 与 `PP-OCRv6_medium_rec`，不增加方向分类、版面分析或语言模型。PP-OCRv6 medium 统一支持中文、英文、日文及拉丁语种，官方也提供 Windows x64 CPU 推理支持。([PP-OCRv6 说明](https://www.paddleocr.ai/latest/en/version3.x/algorithm/PP-OCRv6/PP-OCRv6.html)，[Windows CPU 安装说明](https://www.paddlepaddle.org.cn/documentation/docs/zh/install/pip/windows-pip_en.html))
+- 使用原始 `PP-OCRv6_small_det` 与 `PP-OCRv6_small_rec`，不增加方向分类、版面分析或语言模型。PP-OCRv6 small 统一支持中文、英文、日文及拉丁语种，官方也提供 Windows x64 CPU 推理支持。([PP-OCRv6 说明](https://www.paddleocr.ai/latest/en/version3.x/algorithm/PP-OCRv6/PP-OCRv6.html)，[Windows CPU 安装说明](https://www.paddlepaddle.org.cn/documentation/docs/zh/install/pip/windows-pip_en.html))
 - 运行时完全离线：无上传、更新检查、模型下载、遥测、截图文件、OCR 历史或运行日志。
 - 交付无数字签名，附 ZIP 的 SHA-256；接受首次运行出现 SmartScreen“未知发布者”提示。
 
@@ -16,18 +16,18 @@
 固定核心版本并将所有直接、间接依赖锁定到具体 Windows wheel URL 与 SHA-256：
 
 - CPython 3.13.14 Windows x64 embeddable package。官方提供对应的 64 位嵌入式包。([Python 3.13.14](https://www.python.org/downloads/release/python-31314/))
-- PaddlePaddle CPU 3.3.1。
+- PaddlePaddle CPU 3.2.2。
 - PaddleOCR 3.7.0。
 - PaddleX 3.7.2，仅安装 `ocr-core` 所需依赖。
 - PySide6 Essentials 6.11.1，不携带 Qt Addons。
 - OpenCV Contrib 4.10.0.84、NumPy 2.2.6。
-- Noto Sans Mono CJK SC Regular，固定 `Sans2.004` 静态 OTF；ASCII 半宽、CJK 全宽，随包附 OFL 1.1。([字体发布页](https://github.com/notofonts/noto-cjk/releases)，[OFL 许可证](https://github.com/googlefonts/noto-cjk/blob/main/Sans/LICENSE))
+- Noto Sans Mono CJK SC Regular，固定 `Sans2.004` 静态 OTF；ASCII 半宽、CJK 全宽。([字体发布页](https://github.com/notofonts/noto-cjk/releases))
 
 版本兼容性决定（2026-07-25）：
 
-- 原草案固定的 NumPy 1.26.4 没有 CPython 3.13 的 Windows x64 wheel，不能装入 CPython 3.13.14 嵌入运行时。目标锁必须使用 `numpy-2.2.6-cp313-cp313-win_amd64.whl`，不得让解析器自动选择其他版本。NumPy 2.2.6 同时满足 PaddlePaddle 3.3.1 的 `numpy>=1.21`、PaddleX 3.7.2 的 `numpy>=1.24,<2.4` 和 OpenCV Contrib 4.10.0.84 在 Python 3.12 及以上的 `numpy>=1.26.0` 约束。该结论已完成 wheel 元数据和目标标签检查；原生导入及 OCR 运行仍须按第 5 节验证。([NumPy 1.26.4 文件列表](https://pypi.org/project/numpy/1.26.4/)，[NumPy 2.2.6 文件列表](https://pypi.org/project/numpy/2.2.6/))
-- PaddleX 3.7.2 无条件依赖 `aistudio-sdk>=0.3.5`。当前解析到的 `aistudio-sdk` 0.3.8 wheel 将许可证标为 `UNKNOWN`，包内没有许可证文本，发布页也没有可核验的源码仓库或再分发许可。因此它目前是发布合规阻塞项：在发布者提供可核验的再分发授权，或用户另行批准改变依赖边界之前，不得把该 wheel 放入可分发 ZIP，不得依据第三方聚合站点猜测其许可证，也不得把许可证收集步骤标记为通过。([aistudio-sdk 0.3.8 发布页](https://pypi.org/project/aistudio-sdk/0.3.8/))
-
+- 原草案固定的 NumPy 1.26.4 没有 CPython 3.13 的 Windows x64 wheel，不能装入 CPython 3.13.14 嵌入运行时。目标锁必须使用 `numpy-2.2.6-cp313-cp313-win_amd64.whl`，不得让解析器自动选择其他版本。NumPy 2.2.6 同时满足 PaddlePaddle 3.2.2 的 `numpy>=1.21`、PaddleX 3.7.2 的 `numpy>=1.24,<2.4` 和 OpenCV Contrib 4.10.0.84 在 Python 3.12 及以上的 `numpy>=1.26.0` 约束。该结论已完成 wheel 元数据和目标标签检查；原生导入及 OCR 运行仍须按第 5 节验证。([NumPy 1.26.4 文件列表](https://pypi.org/project/numpy/1.26.4/)，[NumPy 2.2.6 文件列表](https://pypi.org/project/numpy/2.2.6/))
+- Windows 11 x64 实测中，PaddlePaddle 3.3.1 在 oneDNN 检测器预热阶段触发原生属性转换错误；相同依赖、参数和模型切换到 3.2.2 后可完成预热与推理。因此目标锁固定为 3.2.2，不得自动升级。
+- 同一台 Windows 11 x64、相同截图和推理参数下，PP-OCRv6 small 将 1280×720 识别中位耗时从 14.866 秒降到 1.066 秒，将 4K 密集截图从 92.305 秒降到 8.869 秒。官方精度指标相较 medium 有约 2 个百分点的取舍；用户于 2026-07-25 明确选择将检测和识别模型全部改为 small。
 应用采用单进程 PySide6。模型在专用 `QThread` 中创建、预热并常驻，主线程只处理热键、截图和窗口事件；同时只允许一个 OCR 任务。
 
 ### 2.2 稳定配置和启动接口
@@ -144,9 +144,9 @@
 
 - `src/textsnap/`：应用状态、Windows 集成、PySide6 界面、OCR 工作线程、布局和隐私策略。
 - `native/`：Unicode Win32 GUI launcher、图标和资源脚本。
-- `scripts/`：依赖锁定、模型获取、Windows staging、许可证收集、静态验证和确定性 ZIP 构建。
+- `scripts/`：依赖锁定、模型获取、Windows staging、静态验证和确定性 ZIP 构建。
 - `tests/`：纯单元测试、端到端 OCR 测试、HTML/CSS 样本及 Windows 验收脚本。
-- `vendor-lock/`：核心资源及所有 wheel/model/font 的 URL、版本、许可证和 SHA-256，不直接提交数百 MiB 二进制。
+- `vendor-lock/`：核心资源及所有 wheel/model/font 的 URL、版本和 SHA-256，不直接提交数百 MiB 二进制。
 
 ### 4.2 构建流程
 
@@ -163,19 +163,17 @@ TextSnapLayout/
 ├── app/
 ├── runtime/
 ├── models/
-│   ├── PP-OCRv6_medium_det/
-│   └── PP-OCRv6_medium_rec/
+│   ├── PP-OCRv6_small_det/
+│   └── PP-OCRv6_small_rec/
 ├── assets/fonts/
 ├── data/
-├── LICENSES/
 ├── README.zh-CN.md
 └── BUILD_MANIFEST.json
 ```
 
-7. 收集 Python、Paddle、PaddleOCR、PaddleX、Qt/PySide、OpenCV、Noto 及所有传递依赖的许可证和版本；任何依赖缺少可核验的再分发许可都必须使构建失败。当前不得绕过 2.1 节记录的 `aistudio-sdk` 发布合规阻塞。
-8. 静态验证所有 `.exe/.dll/.pyd` 都是 x86-64，检查 PE 导入依赖、模型文件完整性、ZIP 内路径和重复 DLL。
-9. 使用固定文件顺序和时间戳生成确定性 ZIP，并输出同名 `.sha256`。
-10. 不使用 PyInstaller、Nuitka、Wine、单文件自解压或 Windows 安装器。
+7. 静态验证所有 `.exe/.dll/.pyd` 都是 x86-64，检查 PE 导入依赖、模型文件完整性、ZIP 内路径和重复 DLL。
+8. 使用固定文件顺序和时间戳生成确定性 ZIP，并输出同名 `.sha256`。
+9. 不使用 PyInstaller、Nuitka、Wine、单文件自解压或 Windows 安装器。
 
 ### 4.3 实施阶段
 
@@ -240,4 +238,3 @@ TextSnapLayout/
 - ARM64 Linux 可以验证 OCR、布局和包结构，但不能证明 Windows DLL 加载、全局热键、托盘、DPI/GDI 截图已经成功；这些结论必须以用户实机结果为准。
 - 如果 QThread 中的 Paddle 原生调用导致主界面无法重绘，该问题会重新打开“单进程架构”决策；在出现实证前不擅自改为 Python 子进程或第二套运行时。
 - 如果用户移动或删除程序目录前未关闭开机启动，HKCU 中可能留下失效路径；README 必须说明先关闭开机启动，重新运行已移动程序时则自动更新路径。
-- PaddleX 3.7.2 的传递依赖 `aistudio-sdk` 0.3.8 尚无可核验的再分发许可；在 2.1 节的合规门禁解除前，可以继续进行不包含该发布物的代码和测试工作，但不能生成或发布声称许可证完整的最终 ZIP。

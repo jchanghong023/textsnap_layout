@@ -10,7 +10,7 @@ import tarfile
 import tempfile
 import unittest
 import zipfile
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 from native.generate_icon import generate_icon
 from scripts.build_native import build_launcher
@@ -20,16 +20,13 @@ from scripts.release_pipeline import (
     PRODUCT_VERSION,
     HashMismatchError,
     InstallRegistry,
-    LicenseGateError,
     LockValidationError,
     LockSet,
     PeValidationError,
+    PipelineError,
     UnsafeArchiveError,
     WheelValidationError,
     _write_deterministic_zip,
-    build_deterministic_zip,
-    collect_licenses,
-    evaluate_license_gate,
     evaluate_marker,
     extract_locked_model,
     fetch_exact,
@@ -50,6 +47,7 @@ from scripts.release_pipeline import (
     validate_windows_relative_path,
     validate_zip_archive,
     validate_zip_members,
+    verify_saved_staging_for_package,
     version_satisfies,
     windows_path_key,
     tree_digest,
@@ -91,7 +89,6 @@ def make_wheel(
             "Root-Is-Purelib: true\n"
             f"Tag: {tag}\n\n"
         ).encode(),
-        f"{prefix}/licenses/LICENSE": b"synthetic license\n",
     }
     contents.update(additional or {})
     record_name = f"{prefix}/RECORD"
@@ -116,17 +113,6 @@ def make_wheel(
         "requires_python": ">=3.10",
         "selected_extras": [],
         "source": {"kind": "direct", "required_by": []},
-        "license": {
-            "expression": "MIT",
-            "redistributable": True,
-            "status": "verified",
-            "evidence": {
-                "status": "embedded",
-                "embedded_paths": [f"{prefix}/licenses/LICENSE"],
-                "external_evidence_ids": [],
-                "notes": [],
-            },
-        },
     }
 
 
@@ -191,7 +177,6 @@ class TargetAndLockTests(unittest.TestCase):
             root=locks.root,
             wheels=copy.deepcopy(locks.wheels),
             resources=copy.deepcopy(locks.resources),
-            licenses=copy.deepcopy(locks.licenses),
         )
 
     def test_checked_in_lock_has_exact_68_wheel_windows_closure_shape(self) -> None:
@@ -244,7 +229,7 @@ class TargetAndLockTests(unittest.TestCase):
         detector = next(
             artifact
             for artifact in locks.resources["artifacts"]
-            if artifact["id"] == "pp-ocrv6-medium-det-inference"
+            if artifact["id"] == "pp-ocrv6-small-det-inference"
         )
         detector["version"] = "different-model"
 
@@ -287,76 +272,6 @@ class TargetAndLockTests(unittest.TestCase):
         self.assertTrue(version_satisfies("3.13.14", ">=3.10,<3.14"))
         self.assertFalse(version_satisfies("3.13.14", "<3.13"))
         self.assertTrue(version_satisfies("2.2.6", "==2.2.*"))
-
-    def test_current_license_gate_has_required_hard_blockers(self) -> None:
-        blockers = evaluate_license_gate(LockSet.load(REPOSITORY_ROOT / "vendor-lock"))
-        identifiers = {item["id"] for item in blockers}
-        self.assertIn("aistudio-sdk-license-missing", identifiers)
-        self.assertIn("pyside-qt-notices-incomplete", identifiers)
-        self.assertIn("msvc-runtime-redistribution-review", identifiers)
-        aistudio = next(
-            item for item in blockers if item["id"].startswith("artifact-aistudio-sdk")
-        )
-        self.assertIn("UNKNOWN", aistudio["reason"])
-
-    def test_status_flip_cannot_replace_affirmative_aistudio_evidence(self) -> None:
-        locks = self._copied_checked_in_locks()
-        aistudio = next(
-            artifact
-            for artifact in locks.wheels["artifacts"]
-            if artifact["name"] == "aistudio-sdk"
-        )
-        aistudio["license"].update(
-            {
-                "expression": "MIT",
-                "redistributable": True,
-                "status": "verified",
-            }
-        )
-        aistudio["license"]["evidence"]["status"] = "external_locked"
-        obligation = next(
-            item
-            for item in locks.licenses["release_obligations"]
-            if item["id"] == "aistudio-sdk-license-missing"
-        )
-        obligation["status"] = "verified"
-
-        blockers = evaluate_license_gate(locks)
-        artifact_blocker = next(
-            item for item in blockers if item["id"] == "artifact-aistudio-sdk-0.3.8"
-        )
-        obligation_blocker = next(
-            item for item in blockers if item["id"] == "aistudio-sdk-license-missing"
-        )
-        self.assertIn("does not affirm", artifact_blocker["reason"])
-        self.assertIn(
-            "lacks a structured resolution record", obligation_blocker["reason"]
-        )
-
-    def test_relationship_pending_model_card_is_not_resolved_evidence(self) -> None:
-        locks = self._copied_checked_in_locks()
-        detector = next(
-            artifact
-            for artifact in locks.resources["artifacts"]
-            if artifact["id"] == "pp-ocrv6-medium-det-inference"
-        )
-        detector["license"].update(
-            {
-                "redistributable": True,
-                "status": "verified",
-            }
-        )
-
-        blocker = next(
-            item
-            for item in evaluate_license_gate(locks)
-            if item["id"] == "artifact-pp-ocrv6-medium-det-inference"
-        )
-        self.assertIn(
-            "verified_content_relationship_pending",
-            blocker["reason"],
-        )
-
 
 class ArchiveAndWheelTests(unittest.TestCase):
     def test_windows_archive_paths_reject_traversal_and_device_names(self) -> None:
@@ -475,117 +390,6 @@ class ArchiveAndWheelTests(unittest.TestCase):
             inspection = inspect_wheel(wheel, artifact)
 
             self.assertEqual(inspection.dist_info_prefix, "demo-1.0.dist-info/")
-
-    def test_collected_licenses_preserve_paths_with_duplicate_basenames(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            cache = root / "cache"
-            wheel = cache / "artifacts" / "demo-1.0-py3-none-any.whl"
-            wheel.parent.mkdir(parents=True)
-            license_paths = (
-                "demo-1.0.dist-info/LICENSE.txt",
-                "demo/_core/LICENSE.txt",
-            )
-            artifact = make_wheel(
-                wheel,
-                additional={path: path.encode() for path in license_paths},
-            )
-            artifact["license"]["evidence"]["embedded_paths"] = list(license_paths)
-            locks = LockSet(
-                root=root,
-                wheels={"artifacts": [artifact]},
-                resources={"artifacts": []},
-                licenses={"external_evidence": [], "release_obligations": []},
-            )
-            stage = root / "stage"
-            stage.mkdir()
-
-            report = collect_licenses(
-                locks,
-                cache,
-                stage,
-                enforce_release_gate=False,
-            )
-
-            self.assertTrue(report["passed"])
-            for source_path in license_paths:
-                self.assertTrue(
-                    (
-                        stage
-                        / "LICENSES"
-                        / "python"
-                        / "demo-1.0"
-                        / Path(*PurePosixPath(source_path).parts)
-                    ).is_file()
-                )
-
-    def test_external_archive_collects_only_locked_license_member(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            cache = root / "cache"
-            wheel = cache / "artifacts" / "demo-1.0-py3-none-any.whl"
-            wheel.parent.mkdir(parents=True)
-            artifact = make_wheel(wheel)
-            artifact["license"]["evidence"]["external_evidence_ids"] = [
-                "archive-license"
-            ]
-
-            license_bytes = b"locked member license\n"
-            evidence_cache = cache / "evidence" / "archive-license.evidence"
-            evidence_cache.parent.mkdir(parents=True)
-            with zipfile.ZipFile(evidence_cache, "w") as archive:
-                archive.writestr("licenses/LICENSE.txt", license_bytes)
-                archive.writestr("unrelated.bin", b"must not be collected")
-            evidence_sha256, evidence_size = sha256_file(evidence_cache)
-            evidence = {
-                "id": "archive-license",
-                "component": "demo",
-                "version": "1.0",
-                "kind": "publisher_dependency_archive_member",
-                "expression": "MIT",
-                "url": "https://example.invalid/dependency.zip",
-                "size": evidence_size,
-                "sha256": evidence_sha256,
-                "status": "verified_content",
-                "relationship": "exact archive member",
-                "member": {
-                    "path": "licenses/LICENSE.txt",
-                    "size": len(license_bytes),
-                    "sha256": hashlib.sha256(license_bytes).hexdigest(),
-                },
-            }
-            locks = LockSet(
-                root=root,
-                wheels={"artifacts": [artifact]},
-                resources={"artifacts": []},
-                licenses={
-                    "external_evidence": [evidence],
-                    "release_obligations": [],
-                },
-            )
-            stage = root / "stage"
-            stage.mkdir()
-
-            report = collect_licenses(
-                locks,
-                cache,
-                stage,
-                enforce_release_gate=False,
-            )
-
-            self.assertTrue(report["passed"])
-            collected = stage / "LICENSES" / "evidence" / "archive-license.txt"
-            self.assertEqual(collected.read_bytes(), license_bytes)
-            index = load_json_object(stage / "LICENSES" / "INDEX.json")
-            indexed = next(
-                item
-                for item in index["external_evidence"]
-                if item["id"] == "archive-license"
-            )
-            self.assertEqual(
-                indexed["source"],
-                "https://example.invalid/dependency.zip!/licenses/LICENSE.txt",
-            )
 
     def test_wheel_path_traversal_is_rejected_before_record_use(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -941,22 +745,18 @@ class NativeAndZipTests(unittest.TestCase):
                     "target": "windows-x86_64",
                     "python": "3.13.14",
                 },
-                "licenses": {"passed": profile == "release"},
+                "profile": profile,
                 "files": files,
                 "files_digest": tree_digest(files),
             },
         )
-        write_staging_state(
-            stage,
-            profile=profile,
-            licenses_passed=profile == "release",
-        )
+        write_staging_state(stage, profile=profile)
         return stage
 
     def test_two_zip_builds_are_byte_identical(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            stage = self._make_saved_stage(root, profile="release")
+            stage = self._make_saved_stage(root, profile="private-use")
             first = root / "one" / f"{PRODUCT_NAME}-{PRODUCT_VERSION}-win-x64.zip"
             second = root / "two" / f"{PRODUCT_NAME}-{PRODUCT_VERSION}-win-x64.zip"
             first_result = _write_deterministic_zip(stage, first)
@@ -973,60 +773,35 @@ class NativeAndZipTests(unittest.TestCase):
                     )
                 )
 
-    def test_nonredistributable_staging_cannot_create_zip(self) -> None:
+    def test_private_use_saved_staging_is_package_eligible(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            stage = self._make_saved_stage(root, profile="nonredistributable-test")
-            output = root / f"{PRODUCT_NAME}-{PRODUCT_VERSION}-win-x64.zip"
-            with self.assertRaises(LicenseGateError):
-                build_deterministic_zip(
-                    stage,
-                    output,
-                    locks=LockSet.load(REPOSITORY_ROOT / "vendor-lock"),
-                )
-            self.assertFalse(output.exists())
+            stage = self._make_saved_stage(root, profile="private-use")
 
-    def test_public_zip_builder_rechecks_current_lock_before_saved_release(
-        self,
-    ) -> None:
+            state = verify_saved_staging_for_package(stage)
+
+            self.assertEqual(state["profile"], "private-use")
+
+    def test_other_staging_profile_is_not_package_eligible(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             stage = self._make_saved_stage(root, profile="release")
-            output = root / f"{PRODUCT_NAME}-{PRODUCT_VERSION}-win-x64.zip"
 
-            with self.assertRaises(LicenseGateError):
-                build_deterministic_zip(
-                    stage,
-                    output,
-                    locks=LockSet.load(REPOSITORY_ROOT / "vendor-lock"),
-                )
+            with self.assertRaisesRegex(PipelineError, "private-use"):
+                verify_saved_staging_for_package(stage)
 
-            self.assertFalse(output.exists())
-            self.assertFalse(output.with_suffix(".zip.sha256").exists())
-
-    def test_failed_release_gate_does_not_publish_staging(self) -> None:
+    def test_publish_staging_moves_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             temporary = root / ".candidate"
             output = root / "TextSnapLayout"
             temporary.mkdir()
-            with self.assertRaises(LicenseGateError):
-                publish_staging(
-                    temporary,
-                    output,
-                    profile="release",
-                    license_report={
-                        "passed": False,
-                        "blockers": [
-                            {
-                                "id": "aistudio-sdk-license-missing",
-                                "reason": "UNKNOWN license",
-                            }
-                        ],
-                    },
-                )
-            self.assertFalse(output.exists())
-            self.assertTrue(temporary.exists())
+            (temporary / "file.txt").write_text("content", encoding="utf-8")
+
+            publish_staging(temporary, output)
+
+            self.assertTrue((output / "file.txt").is_file())
+            self.assertFalse(temporary.exists())
 
     def test_entry_script_requires_bytecode_protection_before_import(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

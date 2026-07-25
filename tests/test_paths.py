@@ -33,7 +33,7 @@ class BundlePathTests(unittest.TestCase):
             BundlePaths(Path("relative"))
 
     def test_model_specs_use_exact_names_and_complete_hashes(self) -> None:
-        root = Path("/bundle")
+        root = Path(tempfile.gettempdir()).resolve() / "bundle"
         detection, recognition = BundlePaths(root).model_specs()
         self.assertEqual(detection.model_name, DETECTION_MODEL_NAME)
         self.assertEqual(recognition.model_name, RECOGNITION_MODEL_NAME)
@@ -41,7 +41,7 @@ class BundlePathTests(unittest.TestCase):
         self.assertEqual(dict(recognition.files_sha256), RECOGNITION_MODEL_HASHES)
         self.assertEqual(
             detection.directory,
-            root / "models" / "PP-OCRv6_medium_det",
+            root / "models" / "PP-OCRv6_small_det",
         )
 
 

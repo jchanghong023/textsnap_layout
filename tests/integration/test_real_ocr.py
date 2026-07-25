@@ -39,7 +39,9 @@ class RealOcrRegressionTests(unittest.TestCase):
 
         model_root = Path(model_root_value).resolve(strict=True)
         font = Path(font_value).resolve(strict=True)
-        bundle = BundlePaths(Path("/integration-bundle"))
+        bundle = BundlePaths(
+            Path(tempfile.gettempdir()).resolve() / "integration-bundle"
+        )
         detection_spec, recognition_spec = bundle.model_specs()
         detection_spec = type(detection_spec)(
             detection_spec.model_name,

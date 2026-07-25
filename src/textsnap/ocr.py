@@ -30,8 +30,8 @@ from .privacy import require_offline_guard
 from .tiling import generate_tiles, internal_edge_metrics, map_quad_to_global
 
 
-DETECTION_MODEL_NAME = "PP-OCRv6_medium_det"
-RECOGNITION_MODEL_NAME = "PP-OCRv6_medium_rec"
+DETECTION_MODEL_NAME = "PP-OCRv6_small_det"
+RECOGNITION_MODEL_NAME = "PP-OCRv6_small_rec"
 RECOGNITION_BATCH_SIZE = 8
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 _DEFAULT_ENGINE_CONFIG = MappingProxyType(
@@ -40,9 +40,9 @@ _DEFAULT_ENGINE_CONFIG = MappingProxyType(
         "run_mode": "mkldnn",
         "cpu_threads": 10,
         "mkldnn_cache_capacity": 10,
-        # The Paddle 3.3.1 new-IR path has caused a native detector crash on
-        # Linux aarch64. The plan does not require new IR, so disable it
-        # explicitly on every platform instead of attempting a silent fallback.
+        # The locked Paddle 3.2.2 runtime does not require the new-IR path.
+        # Disable it explicitly on every platform to keep inference behavior
+        # identical to the validated Windows CPU configuration.
         "enable_new_ir": False,
     }
 )

@@ -28,12 +28,12 @@
       "numpy==2.2.6",
       "opencv-contrib-python==4.10.0.84",
       "paddleocr==3.7.0",
-      "paddlepaddle==3.3.1",
+      "paddlepaddle==3.2.2",
       "paddlex[ocr-core]==3.7.2",
       "PySide6-Essentials==6.11.1"
     ],
     "selected_extra": "paddlex[ocr-core]",
-    "active_requires_dist_edges": 113,
+    "active_requires_dist_edges": 112,
     "note": "Host pip target options do not reliably evaluate all Windows markers. This lock was re-evaluated with the explicit marker environment above; colorama and tzdata are required Windows-only additions.",
     "installation_policy": "Fetch only these exact URLs, verify size and SHA-256, then install with dependency resolution disabled."
   },
@@ -59,19 +59,6 @@
             "requirement": "aiohappyeyeballs>=2.5.0"
           }
         ]
-      },
-      "license": {
-        "expression": "PSF-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "aiohappyeyeballs-2.7.1.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -101,20 +88,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0 AND MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "aiohttp-3.14.3.dist-info/licenses/LICENSE.txt",
-            "aiohttp-3.14.3.dist-info/licenses/vendor/llhttp/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -142,19 +115,6 @@
             "requirement": "aiosignal>=1.4.0"
           }
         ]
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "aiosignal-1.4.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -184,23 +144,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "UNKNOWN",
-        "redistributable": false,
-        "status": "blocked",
-        "evidence": {
-          "status": "missing",
-          "embedded_paths": [],
-          "external_evidence_ids": [
-            "aistudio-sdk-0.3.8-pypi-json"
-          ],
-          "notes": [
-            "Wheel METADATA reports License: UNKNOWN.",
-            "Wheel has no License-File field or embedded license text.",
-            "PyPI release metadata provides no home page or project URL with verifiable redistribution terms."
-          ]
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -228,19 +171,6 @@
             "requirement": "annotated-types>=0.6.0"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "annotated_types-0.8.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -270,19 +200,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "anyio-4.14.2.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -311,19 +228,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "attrs-26.1.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -351,19 +255,6 @@
             "requirement": "bce-python-sdk"
           }
         ]
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "external_locked",
-          "embedded_paths": [],
-          "external_evidence_ids": [
-            "bce-python-sdk-upstream-license"
-          ],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -401,19 +292,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MPL-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "certifi-2026.7.22.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -442,19 +320,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "0BSD",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "chardet-7.4.3.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -482,19 +347,6 @@
             "requirement": "charset_normalizer<4,>=2"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "charset_normalizer-3.4.9.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -527,19 +379,6 @@
             "requirement": "click<9.0.0,>=8.4.2"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "click-8.4.2.dist-info/licenses/LICENSE.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -578,19 +417,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "colorama-0.4.6.dist-info/licenses/LICENSE.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -619,19 +445,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "colorlog-6.12.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -659,22 +472,6 @@
             "requirement": "crc32c>=2.2.post0"
           }
         ]
-      },
-      "license": {
-        "expression": "LGPL-2.1-or-later",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "crc32c-2.8.dist-info/licenses/AUTHORS.google-crc32c",
-            "crc32c-2.8.dist-info/licenses/LICENSE",
-            "crc32c-2.8.dist-info/licenses/LICENSE.google-crc32c",
-            "crc32c-2.8.dist-info/licenses/LICENSE.slice-by-8"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -716,19 +513,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "filelock-3.32.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -761,19 +545,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "frozenlist-1.8.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -801,19 +572,6 @@
             "requirement": "fsspec>=2023.5.0"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "fsspec-2026.6.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -843,19 +601,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "future-1.0.0.dist-info/LICENSE.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -883,19 +628,6 @@
             "requirement": "h11>=0.16"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "h11-0.16.0.dist-info/licenses/LICENSE.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -925,21 +657,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": null,
-        "status": "pending",
-        "evidence": {
-          "status": "partial",
-          "embedded_paths": [
-            "hf_xet-1.5.2.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": [
-            "Native Rust wheel contains only the project Apache-2.0 text; statically linked crate notices have not been inventoried."
-          ]
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -967,19 +684,6 @@
             "requirement": "httpcore==1.*"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "httpcore-1.0.9.dist-info/licenses/LICENSE.md"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -1013,19 +717,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "httpx-0.28.1.dist-info/licenses/LICENSE.md"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1053,19 +744,6 @@
             "requirement": "huggingface-hub"
           }
         ]
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "huggingface_hub-1.24.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -1107,19 +785,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "idna-3.18.dist-info/licenses/LICENSE.md"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1149,19 +814,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "imagesize-2.0.0.dist-info/licenses/LICENSE.rst"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1190,20 +842,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "modelscope-1.38.1.dist-info/licenses/LICENSE",
-            "modelscope/pipelines/cv/license_plate_detection_pipeline.py"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1231,19 +869,6 @@
             "requirement": "modelscope-hub>=0.0.7"
           }
         ]
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "modelscope_hub-0.1.8.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -1277,19 +902,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "multidict-6.7.1.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1317,19 +929,6 @@
             "requirement": "networkx"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "networkx-3.6.1.dist-info/licenses/LICENSE.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -1399,22 +998,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "BSD-3-Clause AND MIT AND Zlib AND BSD-3-Clause-Attribution AND GPL-3.0-only WITH GCC-exception-3.1",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "numpy-2.2.6.dist-info/LICENSE.txt",
-            "numpy/_core/include/numpy/random/LICENSE.txt",
-            "numpy/ma/LICENSE",
-            "numpy/random/LICENSE.md"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1443,22 +1026,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "cv2/LICENSE-3RD-PARTY.txt",
-            "cv2/LICENSE.txt",
-            "opencv_contrib_python-4.10.0.84.dist-info/LICENSE-3RD-PARTY.txt",
-            "opencv_contrib_python-4.10.0.84.dist-info/LICENSE.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1486,19 +1053,6 @@
             "requirement": "opt-einsum==3.3.0"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "opt_einsum-3.3.0.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -1536,21 +1090,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0 OR BSD-2-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "packaging-26.2.dist-info/licenses/LICENSE",
-            "packaging-26.2.dist-info/licenses/LICENSE.APACHE",
-            "packaging-26.2.dist-info/licenses/LICENSE.BSD"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1574,21 +1113,6 @@
         "direct_requirement": "paddleocr==3.7.0",
         "required_by": []
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "paddleocr-3.7.0.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [
-            "paddleocr-v3.7.0-license"
-          ],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1597,11 +1121,11 @@
     },
     {
       "name": "paddlepaddle",
-      "version": "3.3.1",
-      "filename": "paddlepaddle-3.3.1-cp313-cp313-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/f4/c8/408b9e94ac2e10a55c1122b787359f7a6f79ef894ee1d57d78c5cca838d0/paddlepaddle-3.3.1-cp313-cp313-win_amd64.whl",
-      "size": 104794530,
-      "sha256": "1203e2e1114b49e73a8440b68837ce5c93fdab51fe4838c5e5874ab40f58f747",
+      "version": "3.2.2",
+      "filename": "paddlepaddle-3.2.2-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/e5/b8/8a9f7b673c6ac0f26d8eb49cf8e7689e2f3f5cadd2fc6569ee5b9a4da81d/paddlepaddle-3.2.2-cp313-cp313-win_amd64.whl",
+      "size": 101726676,
+      "sha256": "a05d126c234d3985439cedf1f1005b109c3591ec2a0c5b59ca74a94b693eb283",
       "wheel_tags": [
         "cp313-cp313-win_amd64"
       ],
@@ -1609,29 +1133,8 @@
       "selected_extras": [],
       "source": {
         "kind": "direct",
-        "direct_requirement": "paddlepaddle==3.3.1",
+        "direct_requirement": "paddlepaddle==3.2.2",
         "required_by": []
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": null,
-        "status": "pending",
-        "evidence": {
-          "status": "partial",
-          "embedded_paths": [
-            "paddlepaddle-3.3.1.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [
-            "paddlepaddle-v3.3.1-license",
-            "paddlepaddle-mklml-license",
-            "paddlepaddle-onednn-license",
-            "paddlepaddle-warpctc-license",
-            "paddlepaddle-warprnnt-license"
-          ],
-          "notes": [
-            "Bundled MKLML, oneDNN, MinGW runtimes, BLAS/LAPACK, warp-ctc and warp-transducer notices are not yet complete."
-          ]
-        }
       },
       "verification": {
         "status": "verified",
@@ -1663,21 +1166,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "paddlex-3.7.2.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [
-            "paddlex-v3.7.2-license"
-          ],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1705,19 +1193,6 @@
             "requirement": "pandas>=1.3"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "pandas-3.0.5.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -1751,19 +1226,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT-CMU",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "pillow-12.3.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1795,19 +1257,6 @@
             "requirement": "prettytable"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "prettytable-3.18.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -1841,20 +1290,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "propcache-0.5.2.dist-info/licenses/LICENSE",
-            "propcache-0.5.2.dist-info/licenses/NOTICE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1882,21 +1317,6 @@
             "requirement": "protobuf>=3.20.2"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": null,
-        "status": "pending",
-        "evidence": {
-          "status": "partial",
-          "embedded_paths": [
-            "protobuf-7.35.1.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": [
-            "Native abi3 wheel carries the protobuf license, but bundled/static native dependency notices have not been independently inventoried."
-          ]
-        }
       },
       "verification": {
         "status": "verified",
@@ -1926,19 +1346,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "psutil-7.2.2.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -1966,19 +1373,6 @@
             "requirement": "py-cpuinfo"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "py_cpuinfo-9.0.0.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2008,19 +1402,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "pyclipper-1.4.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2048,20 +1429,6 @@
             "requirement": "pycryptodome>=3.8.0"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-2-Clause AND LicenseRef-Public-Domain",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "pycryptodome-3.23.0.dist-info/AUTHORS.rst",
-            "pycryptodome-3.23.0.dist-info/LICENSE.rst"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2091,19 +1458,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "pydantic-2.13.4.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2131,21 +1485,6 @@
             "requirement": "pydantic-core==2.46.4"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": null,
-        "status": "pending",
-        "evidence": {
-          "status": "partial",
-          "embedded_paths": [
-            "pydantic_core-2.46.4.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": [
-            "Native Rust wheel contains only the project MIT text; statically linked crate notices have not been inventoried."
-          ]
-        }
       },
       "verification": {
         "status": "verified",
@@ -2175,37 +1514,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "BSD-3-Clause AND Apache-2.0 AND CC-BY-4.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "pypdfium2-5.12.1.dist-info/licenses/LICENSES/Apache-2.0.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/LICENSES/BSD-3-Clause.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/LICENSES/CC-BY-4.0.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/abseil.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/agg23.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/fast_float.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/freetype.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/icu.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/lcms.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libjpeg_turbo.ijg",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libjpeg_turbo.md",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libopenjpeg.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libpng.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/libtiff.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/llvm-libc.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/pdfium-binaries.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/pdfium.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/simdutf.txt",
-            "pypdfium2-5.12.1.dist-info/licenses/data/windows_x64/BUILD_LICENSES/zlib.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2228,27 +1536,6 @@
         "kind": "direct",
         "direct_requirement": "PySide6-Essentials==6.11.1",
         "required_by": []
-      },
-      "license": {
-        "expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
-        "redistributable": null,
-        "status": "pending",
-        "evidence": {
-          "status": "partial",
-          "embedded_paths": [
-            "pyside6_essentials-6.11.1.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
-          ],
-          "external_evidence_ids": [
-            "pyside-v6.11.1-lgpl-3.0",
-            "pyside-v6.11.1-gpl-2.0",
-            "pyside-v6.11.1-gpl-3.0",
-            "msvc-runtime-2015-2022-terms",
-            "msvc-runtime-redistribution-guidance"
-          ],
-          "notes": [
-            "Wheel carries only LicenseRef-Qt-Commercial; open-source Qt module/plugin notices and Microsoft runtime redistribution evidence are incomplete."
-          ]
-        }
       },
       "verification": {
         "status": "verified",
@@ -2278,22 +1565,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "LGPL-3.0-only",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "python_bidi-0.6.11.dist-info/licenses/AUTHORS.rst",
-            "python_bidi-0.6.11.dist-info/licenses/COPYING",
-            "python_bidi-0.6.11.dist-info/licenses/COPYING.LESSER",
-            "python_bidi-0.6.11.dist-info/licenses/LICENSE-THIRD-PARTY.yml"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2322,19 +1593,6 @@
             "requirement": "python-dateutil>=2.8.2"
           }
         ]
-      },
-      "license": {
-        "expression": "Apache-2.0 OR BSD-3-Clause",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "python_dateutil-2.9.0.post0.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2371,19 +1629,6 @@
             "requirement": "PyYAML==6.0.2"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "PyYAML-6.0.2.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2429,20 +1674,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "requests-2.34.2.dist-info/licenses/LICENSE",
-            "requests-2.34.2.dist-info/licenses/NOTICE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2470,19 +1701,6 @@
             "requirement": "ruamel.yaml"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "ruamel_yaml-0.19.1.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2512,21 +1730,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": null,
-        "status": "pending",
-        "evidence": {
-          "status": "partial",
-          "embedded_paths": [
-            "safetensors-0.8.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": [
-            "Native Rust wheel contains only the project Apache-2.0 text; statically linked crate notices have not been inventoried."
-          ]
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2552,41 +1755,8 @@
           {
             "name": "modelscope",
             "requirement": "setuptools"
-          },
-          {
-            "name": "paddlepaddle",
-            "requirement": "setuptools; python_version >= \"3.12\""
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "setuptools-83.0.0.dist-info/licenses/LICENSE",
-            "setuptools/_vendor/autocommand-2.2.2.dist-info/LICENSE",
-            "setuptools/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
-            "setuptools/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
-            "setuptools/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
-            "setuptools/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
-            "setuptools/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
-            "setuptools/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
-            "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
-            "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
-            "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
-            "setuptools/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
-            "setuptools/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
-            "setuptools/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
-            "setuptools/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
-            "setuptools/config/NOTICE",
-            "setuptools/config/_validate_pyproject/NOTICE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2616,21 +1786,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "BSD-3-Clause AND LGPL-2.1-or-later",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "shapely-2.1.2.dist-info/licenses/LICENSE.txt",
-            "shapely-2.1.2.dist-info/licenses/LICENSE_GEOS",
-            "shapely-2.1.2.dist-info/licenses/LICENSE_win32"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2658,27 +1813,6 @@
             "requirement": "shiboken6==6.11.1"
           }
         ]
-      },
-      "license": {
-        "expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
-        "redistributable": null,
-        "status": "pending",
-        "evidence": {
-          "status": "partial",
-          "embedded_paths": [
-            "shiboken6-6.11.1.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
-          ],
-          "external_evidence_ids": [
-            "pyside-v6.11.1-lgpl-3.0",
-            "pyside-v6.11.1-gpl-2.0",
-            "pyside-v6.11.1-gpl-3.0",
-            "msvc-runtime-2015-2022-terms",
-            "msvc-runtime-redistribution-guidance"
-          ],
-          "notes": [
-            "Wheel carries only LicenseRef-Qt-Commercial; open-source Shiboken/Qt notices and Microsoft runtime redistribution evidence are incomplete."
-          ]
-        }
       },
       "verification": {
         "status": "verified",
@@ -2712,19 +1846,6 @@
             "requirement": "six >=1.5"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "six-1.17.0.dist-info/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2765,19 +1886,6 @@
             "requirement": "tqdm>=4.64.0"
           }
         ]
-      },
-      "license": {
-        "expression": "MPL-2.0 AND MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "tqdm-4.69.1.dist-info/licenses/LICENCE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2831,19 +1939,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "PSF-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "typing_extensions-4.16.0.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2871,19 +1966,6 @@
             "requirement": "typing-inspection>=0.4.2"
           }
         ]
-      },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "typing_inspection-0.4.2.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -2914,20 +1996,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "tzdata-2026.3.dist-info/licenses/LICENSE",
-            "tzdata-2026.3.dist-info/licenses/licenses/LICENSE_APACHE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -2955,19 +2023,6 @@
             "requirement": "ujson"
           }
         ]
-      },
-      "license": {
-        "expression": "BSD-3-Clause AND TCL",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "ujson-5.13.0.dist-info/licenses/LICENSE.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",
@@ -3005,19 +2060,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "urllib3-2.7.0.dist-info/licenses/LICENSE.txt"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -3046,19 +2088,6 @@
           }
         ]
       },
-      "license": {
-        "expression": "MIT",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "wcwidth-0.8.2.dist-info/licenses/LICENSE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
@@ -3086,20 +2115,6 @@
             "requirement": "yarl<2.0,>=1.17.0"
           }
         ]
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": true,
-        "status": "verified",
-        "evidence": {
-          "status": "embedded",
-          "embedded_paths": [
-            "yarl-1.24.5.dist-info/licenses/LICENSE",
-            "yarl-1.24.5.dist-info/licenses/NOTICE"
-          ],
-          "external_evidence_ids": [],
-          "notes": []
-        }
       },
       "verification": {
         "status": "verified",

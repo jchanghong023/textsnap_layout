@@ -56,7 +56,7 @@ PINNED_DIRECT_REQUIREMENTS = (
     "numpy==2.2.6",
     "opencv-contrib-python==4.10.0.84",
     "paddleocr==3.7.0",
-    "paddlepaddle==3.3.1",
+    "paddlepaddle==3.2.2",
     "paddlex[ocr-core]==3.7.2",
     "PySide6-Essentials==6.11.1",
 )
@@ -64,7 +64,7 @@ PINNED_CORE_WHEEL_VERSIONS = {
     "numpy": "2.2.6",
     "opencv-contrib-python": "4.10.0.84",
     "paddleocr": "3.7.0",
-    "paddlepaddle": "3.3.1",
+    "paddlepaddle": "3.2.2",
     "paddlex": "3.7.2",
     "pyside6-essentials": "6.11.1",
     "shiboken6": "6.11.1",
@@ -74,38 +74,20 @@ PINNED_RESOURCE_IDENTITIES = {
         "python_embeddable_runtime",
         "3.13.14",
     ),
-    "pp-ocrv6-medium-det-inference": (
+    "pp-ocrv6-small-det-inference": (
         "paddle_inference_model",
-        "PP-OCRv6_medium_det",
+        "PP-OCRv6_small_det",
     ),
-    "pp-ocrv6-medium-rec-inference": (
+    "pp-ocrv6-small-rec-inference": (
         "paddle_inference_model",
-        "PP-OCRv6_medium_rec",
+        "PP-OCRv6_small_rec",
     ),
     "noto-sans-mono-cjk-sc-regular-sans2.004": ("font", "Sans2.004"),
-    "paddlepaddle-3.3.1-cp312-linux-aarch64-integration": (
+    "paddlepaddle-3.2.2-cp312-linux-aarch64-integration": (
         "integration_test_wheel",
-        "3.3.1",
+        "3.2.2",
     ),
 }
-ALLOWED_RELEASE_LICENSE_STATUSES = frozenset({"verified"})
-RESOLVED_EXTERNAL_EVIDENCE_STATUSES = frozenset(
-    {
-        "verified_content",
-        "verified_content_mutable_url",
-        "verified_content_tagged_url",
-    }
-)
-AFFIRMATIVE_LICENSE_EVIDENCE_KINDS = frozenset(
-    {
-        "publisher_artifact_license",
-        "publisher_dependency_archive_member",
-        "publisher_license_terms_html_snapshot",
-        "publisher_redistribution_authorization",
-        "publisher_upstream_license",
-        "upstream_dependency_license",
-    }
-)
 STAGING_STATE_NAME = ".textsnap-staging.json"
 BUILD_MANIFEST_NAME = "BUILD_MANIFEST.json"
 ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
@@ -151,19 +133,6 @@ class HashMismatchError(PipelineError):
 
 class WheelValidationError(PipelineError):
     """A wheel is malformed, incompatible, or outside the lock closure."""
-
-
-class LicenseGateError(PipelineError):
-    """Redistribution evidence is not complete."""
-
-    def __init__(self, blockers: Sequence[Mapping[str, Any]]):
-        self.blockers = tuple(dict(item) for item in blockers)
-        summary = "; ".join(
-            f"{item.get('id', item.get('component', 'unknown'))}: "
-            f"{item.get('reason', item.get('status', 'failed'))}"
-            for item in self.blockers
-        )
-        super().__init__(f"release license gate failed: {summary}")
 
 
 class PeValidationError(PipelineError):
@@ -249,7 +218,6 @@ class LockSet:
     root: Path
     wheels: Mapping[str, Any]
     resources: Mapping[str, Any]
-    licenses: Mapping[str, Any]
 
     @classmethod
     def load(cls, root: Path) -> "LockSet":
@@ -258,7 +226,6 @@ class LockSet:
             root=root,
             wheels=load_json_object(root / "wheels.json"),
             resources=load_json_object(root / "resources.json"),
-            licenses=load_json_object(root / "licenses.json"),
         )
 
     @property
@@ -278,14 +245,10 @@ class LockSet:
     def all_runtime_artifacts(self) -> list[dict[str, Any]]:
         return [*self.wheel_artifacts, *self.runtime_resources]
 
-    @property
-    def external_evidence(self) -> list[dict[str, Any]]:
-        return list(self.licenses.get("external_evidence", ()))
-
     def input_hashes(self) -> dict[str, str]:
         return {
             name: sha256_file(self.root / name)[0]
-            for name in ("wheels.json", "resources.json", "licenses.json")
+            for name in ("wheels.json", "resources.json")
         }
 
 
@@ -611,7 +574,6 @@ def validate_lock_set(
     for filename, document in (
         ("wheels.json", locks.wheels),
         ("resources.json", locks.resources),
-        ("licenses.json", locks.licenses),
     ):
         if document.get("schema_version") != LOCK_SCHEMA_VERSION:
             raise LockValidationError(
@@ -704,10 +666,6 @@ def validate_lock_set(
                 f"{context}: lock tags do not match the wheel filename tags"
             )
 
-        license_info = _require_mapping(artifact.get("license"), f"{context} license")
-        if license_info.get("status") not in {"verified", "pending", "blocked"}:
-            raise LockValidationError(f"{context}: invalid license status")
-
     for name, expected_version in PINNED_CORE_WHEEL_VERSIONS.items():
         artifact = names.get(name)
         if artifact is None or artifact.get("version") != expected_version:
@@ -794,117 +752,14 @@ def validate_lock_set(
                 )
         else:
             raise LockValidationError(f"{context}: unknown resource kind {kind!r}")
-        license_info = _require_mapping(artifact.get("license"), f"{context} license")
-        if license_info.get("status") not in {"verified", "pending", "blocked"}:
-            raise LockValidationError(f"{context}: invalid license status")
-
     if resource_identities != PINNED_RESOURCE_IDENTITIES:
         raise LockValidationError(
             "resource identities or versions differ from the implementation plan"
         )
 
-    evidence_ids: set[str] = set()
-    for raw_evidence in _require_list(
-        locks.licenses.get("external_evidence"), "external evidence"
-    ):
-        evidence = _require_mapping(raw_evidence, "external evidence item")
-        identifier = evidence.get("id")
-        if not isinstance(identifier, str) or not identifier:
-            raise LockValidationError("external evidence id is required")
-        if identifier in evidence_ids:
-            raise LockValidationError(f"duplicate evidence id {identifier}")
-        evidence_ids.add(identifier)
-        status = evidence.get("status")
-        if status not in (
-            RESOLVED_EXTERNAL_EVIDENCE_STATUSES
-            | {"verified_content_relationship_pending"}
-        ):
-            raise LockValidationError(
-                f"evidence {identifier}: unsupported evidence status {status!r}"
-            )
-        if not isinstance(evidence.get("kind"), str) or not evidence.get("kind"):
-            raise LockValidationError(f"evidence {identifier}: kind is required")
-        _validate_artifact_download_fields(
-            {
-                "filename": f"{identifier}.evidence",
-                "url": evidence.get("url"),
-                "size": evidence.get("size"),
-                "sha256": evidence.get("sha256"),
-            },
-            f"evidence {identifier}",
-        )
-        member = evidence.get("member")
-        if member is not None:
-            member = _require_mapping(member, f"evidence {identifier} member")
-            member_path = member.get("path")
-            if not isinstance(member_path, str):
-                raise LockValidationError(
-                    f"evidence {identifier}: member path is required"
-                )
-            validate_windows_relative_path(member_path)
-            member_size = member.get("size")
-            if (
-                not isinstance(member_size, int)
-                or isinstance(member_size, bool)
-                or member_size <= 0
-            ):
-                raise LockValidationError(
-                    f"evidence {identifier}: member size must be positive"
-                )
-            if not _SHA256_RE.fullmatch(str(member.get("sha256", ""))):
-                raise LockValidationError(
-                    f"evidence {identifier}: member SHA-256 is required"
-                )
-
-    obligation_ids: set[str] = set()
-    for raw_obligation in _require_list(
-        locks.licenses.get("release_obligations"), "release obligations"
-    ):
-        obligation = _require_mapping(raw_obligation, "release obligation")
-        identifier = obligation.get("id")
-        if not isinstance(identifier, str) or not identifier:
-            raise LockValidationError("release obligation id is required")
-        if identifier in obligation_ids:
-            raise LockValidationError(f"duplicate release obligation {identifier}")
-        obligation_ids.add(identifier)
-        if obligation.get("status") not in {"verified", "pending", "blocked"}:
-            raise LockValidationError(
-                f"obligation {identifier}: invalid license status"
-            )
-        if obligation.get("blocks_release") is not True:
-            raise LockValidationError(
-                f"obligation {identifier}: every listed obligation must block release"
-            )
-        components = obligation.get("components")
-        if (
-            not isinstance(components, list)
-            or not components
-            or not all(isinstance(item, str) and item for item in components)
-        ):
-            raise LockValidationError(
-                f"obligation {identifier}: components must be non-empty strings"
-            )
-        for evidence_id in obligation.get("evidence_ids", ()):
-            if evidence_id not in evidence_ids:
-                raise LockValidationError(
-                    f"obligation {identifier}: evidence {evidence_id!r} is absent"
-                )
-
-    policy = _require_mapping(locks.licenses.get("policy"), "license policy")
-    gate = _require_mapping(policy.get("release_gate"), "license release gate")
-    if set(gate.get("allowed_statuses", ())) != ALLOWED_RELEASE_LICENSE_STATUSES:
-        raise LockValidationError("license gate must allow only verified status")
-    if gate.get("require_redistributable_true") is not True:
-        raise LockValidationError("license gate must require redistributable=true")
-    if gate.get("require_all_evidence_ids_resolved") is not True:
-        raise LockValidationError("license gate must resolve every evidence id")
-    if gate.get("require_external_evidence_sha256") is not True:
-        raise LockValidationError("license gate must lock external evidence hashes")
-
     return {
         "wheel_count": len(artifacts),
         "runtime_resource_count": len(locks.runtime_resources),
-        "external_evidence_count": len(evidence_ids),
         "input_hashes": locks.input_hashes(),
     }
 
@@ -1032,12 +887,6 @@ def artifact_cache_path(cache_root: Path, artifact: Mapping[str, Any]) -> Path:
     return safe_destination(cache_root / "artifacts", str(artifact["filename"]))
 
 
-def evidence_cache_path(cache_root: Path, evidence: Mapping[str, Any]) -> Path:
-    identifier = str(evidence["id"])
-    validate_windows_relative_path(identifier)
-    return safe_destination(cache_root / "evidence", f"{identifier}.evidence")
-
-
 def fetch_exact(
     *,
     url: str,
@@ -1101,8 +950,6 @@ def fetch_exact(
 def fetch_locked_inputs(
     locks: LockSet,
     cache_root: Path,
-    *,
-    include_evidence: bool = True,
 ) -> list[dict[str, Any]]:
     validate_lock_set(locks)
     fetched: list[dict[str, Any]] = []
@@ -1120,15 +967,6 @@ def fetch_locked_inputs(
                 **result,
             }
         )
-    if include_evidence:
-        for evidence in locks.external_evidence:
-            result = fetch_exact(
-                url=str(evidence["url"]),
-                destination=evidence_cache_path(cache_root, evidence),
-                expected_sha256=str(evidence["sha256"]),
-                expected_size=int(evidence["size"]),
-            )
-            fetched.append({"id": evidence["id"], "kind": "license-evidence", **result})
     return fetched
 
 
@@ -1838,17 +1676,12 @@ def extract_locked_font(
             locked_destination = validate_windows_relative_path(
                 str(entry["destination_path"])
             ).as_posix()
-            if locked_destination.startswith("fonts/"):
-                destination = f"assets/{locked_destination}"
-            elif locked_destination.startswith("licenses/"):
-                destination = (
-                    "LICENSES/resources/" + locked_destination[len("licenses/") :]
-                )
-            else:
+            if not locked_destination.startswith("fonts/"):
                 raise LockValidationError(
                     f"{artifact['id']}: unsupported font destination "
                     f"{locked_destination!r}"
                 )
+            destination = f"assets/{locked_destination}"
             with archive.open(info, "r") as source:
                 details = _copy_verified_stream(
                     source,
@@ -2160,501 +1993,6 @@ def precompile_checked_hash_bytecode(
         "magic": runtime_magic.hex(),
         "invalidation_mode": "checked-hash",
         "file_count": len(compiled),
-    }
-
-
-def _copy_license_bytes(
-    destination: Path,
-    data: bytes,
-    *,
-    source: str,
-) -> dict[str, Any]:
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.exists():
-        raise PipelineError(f"license destination collision: {destination}")
-    destination.write_bytes(data)
-    return {
-        "path": destination.as_posix(),
-        "sha256": hashlib.sha256(data).hexdigest(),
-        "size": len(data),
-        "source": source,
-    }
-
-
-def _artifact_license_identifier(artifact: Mapping[str, Any]) -> str:
-    if "name" in artifact:
-        return (
-            f"{canonical_distribution_name(str(artifact['name']))}"
-            f"=={artifact['version']}"
-        )
-    return str(artifact["id"])
-
-
-def _declared_evidence_ids(artifact: Mapping[str, Any]) -> list[str]:
-    license_info = artifact.get("license", {})
-    if "evidence_ids" in license_info:
-        return [str(item) for item in license_info.get("evidence_ids", ())]
-    evidence = license_info.get("evidence", {})
-    return [str(item) for item in evidence.get("external_evidence_ids", ())]
-
-
-def _external_evidence_is_affirmative(
-    evidence: Mapping[str, Any],
-    *,
-    artifact: Mapping[str, Any],
-) -> bool:
-    if evidence.get("status") not in RESOLVED_EXTERNAL_EVIDENCE_STATUSES:
-        return False
-    if evidence.get("kind") not in AFFIRMATIVE_LICENSE_EVIDENCE_KINDS:
-        return False
-    expression = evidence.get("expression")
-    artifact_expression = artifact.get("license", {}).get("expression")
-    if (
-        not isinstance(expression, str)
-        or not expression
-        or expression.strip().upper() == "UNKNOWN"
-        or expression != artifact_expression
-    ):
-        return False
-    if evidence.get("version") != artifact.get("version"):
-        return False
-    artifact_name = artifact.get("name")
-    if isinstance(artifact_name, str):
-        component = evidence.get("component")
-        if not isinstance(component, str) or canonical_distribution_name(
-            component
-        ) != canonical_distribution_name(artifact_name):
-            return False
-    return bool(_SHA256_RE.fullmatch(str(evidence.get("sha256", ""))))
-
-
-def _verified_artifact_evidence_reasons(
-    artifact: Mapping[str, Any],
-    evidence_by_id: Mapping[str, Mapping[str, Any]],
-) -> list[str]:
-    license_info = artifact.get("license", {})
-    local_evidence = license_info.get("evidence", {})
-    if not isinstance(local_evidence, Mapping):
-        local_evidence = {}
-    embedded_paths = local_evidence.get("embedded_paths", ())
-    has_embedded = (
-        local_evidence.get("status") == "embedded"
-        and isinstance(embedded_paths, list)
-        and bool(embedded_paths)
-    )
-    declared_ids = _declared_evidence_ids(artifact)
-    affirmative_ids = [
-        evidence_id
-        for evidence_id in declared_ids
-        if evidence_id in evidence_by_id
-        and _external_evidence_is_affirmative(
-            evidence_by_id[evidence_id],
-            artifact=artifact,
-        )
-    ]
-    has_external = bool(affirmative_ids) and (
-        local_evidence.get("status") == "external_locked"
-        or "evidence_ids" in license_info
-        or has_embedded
-    )
-    reasons: list[str] = []
-    if not has_embedded and not has_external:
-        reasons.append(
-            "verified artifact lacks embedded or affirmative external license evidence"
-        )
-    for evidence_id in declared_ids:
-        evidence = evidence_by_id.get(evidence_id)
-        if evidence is not None and not _external_evidence_is_affirmative(
-            evidence,
-            artifact=artifact,
-        ):
-            reasons.append(
-                f"evidence {evidence_id!r} does not affirm this exact "
-                "component/version/license"
-            )
-    return reasons
-
-
-def _verified_obligation_resolution_reasons(
-    obligation: Mapping[str, Any],
-    evidence_by_id: Mapping[str, Mapping[str, Any]],
-) -> list[str]:
-    resolution = obligation.get("resolution")
-    if not isinstance(resolution, Mapping):
-        return ["verified obligation lacks a structured resolution record"]
-    if resolution.get("status") != "verified":
-        return ["obligation resolution status is not verified"]
-    method = resolution.get("method")
-    if not isinstance(method, str) or not method.strip():
-        return ["obligation resolution method is absent"]
-    resolution_ids = resolution.get("evidence_ids")
-    if (
-        not isinstance(resolution_ids, list)
-        or not resolution_ids
-        or not all(isinstance(item, str) and item for item in resolution_ids)
-    ):
-        return ["verified obligation lacks resolution evidence ids"]
-
-    reasons: list[str] = []
-    evidence_items: list[Mapping[str, Any]] = []
-    for evidence_id in resolution_ids:
-        evidence = evidence_by_id.get(evidence_id)
-        if evidence is None:
-            reasons.append(f"resolution evidence {evidence_id!r} is absent")
-            continue
-        evidence_items.append(evidence)
-        if evidence.get("status") not in RESOLVED_EXTERNAL_EVIDENCE_STATUSES:
-            reasons.append(f"resolution evidence {evidence_id!r} remains unresolved")
-        if evidence.get("kind") not in AFFIRMATIVE_LICENSE_EVIDENCE_KINDS:
-            reasons.append(
-                f"resolution evidence {evidence_id!r} is not affirmative license evidence"
-            )
-        if not _SHA256_RE.fullmatch(str(evidence.get("sha256", ""))):
-            reasons.append(f"resolution evidence {evidence_id!r} lacks locked SHA-256")
-
-    identifier = str(obligation.get("id", ""))
-    if identifier == "aistudio-sdk-license-missing" and not any(
-        item.get("kind") == "publisher_redistribution_authorization"
-        and item.get("component") == "aistudio-sdk"
-        and item.get("version") == "0.3.8"
-        for item in evidence_items
-    ):
-        reasons.append(
-            "aistudio-sdk requires publisher redistribution authorization "
-            "for version 0.3.8"
-        )
-    if identifier == "bos-model-license-relationship" and not all(
-        any(
-            item.get("kind") == "publisher_artifact_license"
-            and item.get("component") == model_name
-            for item in evidence_items
-        )
-        for model_name in ("PP-OCRv6_medium_det", "PP-OCRv6_medium_rec")
-    ):
-        reasons.append(
-            "both locked BOS models require publisher artifact-specific licenses"
-        )
-    return reasons
-
-
-def evaluate_license_gate(locks: LockSet) -> list[dict[str, Any]]:
-    blockers: list[dict[str, Any]] = []
-    evidence_by_id = {str(item["id"]): item for item in locks.external_evidence}
-    for artifact in locks.all_runtime_artifacts:
-        component = _artifact_license_identifier(artifact)
-        license_info = artifact.get("license", {})
-        status = license_info.get("status")
-        expression = str(license_info.get("expression", "UNKNOWN"))
-        redistributable = license_info.get("redistributable")
-        reasons: list[str] = []
-        if status not in ALLOWED_RELEASE_LICENSE_STATUSES:
-            reasons.append(f"status is {status!r}, not verified")
-        if redistributable is not True:
-            reasons.append("redistributable is not explicitly true")
-        if expression.strip().upper() == "UNKNOWN":
-            reasons.append("license expression is UNKNOWN")
-        for evidence_id in _declared_evidence_ids(artifact):
-            evidence = evidence_by_id.get(evidence_id)
-            if evidence is None:
-                reasons.append(f"evidence {evidence_id!r} is absent")
-            elif evidence.get("status") not in RESOLVED_EXTERNAL_EVIDENCE_STATUSES:
-                reasons.append(
-                    f"evidence {evidence_id!r} status is {evidence.get('status')!r}"
-                )
-            elif not _SHA256_RE.fullmatch(str(evidence.get("sha256", ""))):
-                reasons.append(f"evidence {evidence_id!r} lacks locked SHA-256")
-        if status in ALLOWED_RELEASE_LICENSE_STATUSES:
-            reasons.extend(
-                _verified_artifact_evidence_reasons(artifact, evidence_by_id)
-            )
-        if reasons:
-            blocker_id = component.replace("==", "-").replace(" ", "-")
-            blockers.append(
-                {
-                    "id": f"artifact-{blocker_id}",
-                    "component": component,
-                    "status": status,
-                    "reason": "; ".join(reasons),
-                }
-            )
-
-    for obligation in locks.licenses.get("release_obligations", ()):
-        if obligation.get("blocks_release") is not True:
-            continue
-        status = obligation.get("status")
-        reasons: list[str] = []
-        if status not in ALLOWED_RELEASE_LICENSE_STATUSES:
-            reasons.append(str(obligation.get("reason", "unresolved obligation")))
-        else:
-            reasons.extend(
-                _verified_obligation_resolution_reasons(
-                    obligation,
-                    evidence_by_id,
-                )
-            )
-        if not reasons:
-            continue
-        blockers.append(
-            {
-                "id": str(obligation.get("id", "unnamed-obligation")),
-                "component": ", ".join(
-                    str(item) for item in obligation.get("components", ())
-                ),
-                "status": status,
-                "reason": "; ".join(reasons),
-                "resolution_required": obligation.get("resolution_required"),
-            }
-        )
-    return sorted(blockers, key=lambda item: str(item["id"]))
-
-
-def _locked_external_evidence_payload(
-    cached: Path,
-    evidence: Mapping[str, Any],
-) -> tuple[bytes, str, str]:
-    member = evidence.get("member")
-    source_url = str(evidence["url"])
-    if member is None:
-        suffix = PurePosixPath(urllib.parse.urlparse(source_url).path).suffix
-        return cached.read_bytes(), suffix, source_url
-
-    if not isinstance(member, Mapping):
-        raise LockValidationError("external evidence member must be an object")
-    member_path = str(member["path"])
-    expected_size = int(member["size"])
-    expected_sha256 = str(member["sha256"])
-    try:
-        with zipfile.ZipFile(cached) as archive:
-            members = validate_zip_members(archive)
-            info = members.get(windows_path_key(member_path))
-            if info is None or info.is_dir() or info.filename != member_path:
-                raise HashMismatchError(
-                    f"{cached}: locked evidence member {member_path!r} is absent"
-                )
-            with archive.open(info, "r") as stream:
-                data = stream.read(expected_size + 1)
-    except zipfile.BadZipFile as exc:
-        raise HashMismatchError(f"{cached}: evidence archive is not a ZIP") from exc
-    if (
-        len(data) != expected_size
-        or hashlib.sha256(data).hexdigest() != expected_sha256
-    ):
-        raise HashMismatchError(
-            f"{cached}: locked evidence member {member_path!r} does not match"
-        )
-    suffix = PurePosixPath(member_path).suffix
-    return data, suffix, f"{source_url}!/{member_path}"
-
-
-def collect_licenses(
-    locks: LockSet,
-    cache_root: Path,
-    stage_root: Path,
-    *,
-    enforce_release_gate: bool,
-) -> dict[str, Any]:
-    license_root = stage_root / "LICENSES"
-    license_root.mkdir(parents=True, exist_ok=True)
-    components: list[dict[str, Any]] = []
-    output_keys: set[str] = set()
-
-    def remember(details: dict[str, Any]) -> dict[str, Any]:
-        absolute = Path(details["path"])
-        relative = absolute.relative_to(stage_root).as_posix()
-        key = windows_path_key(relative)
-        if key in output_keys:
-            raise PipelineError(f"duplicate collected license path {relative}")
-        output_keys.add(key)
-        return {**details, "path": relative}
-
-    for artifact in locks.wheel_artifacts:
-        identifier = _artifact_license_identifier(artifact)
-        license_info = artifact["license"]
-        evidence = license_info.get("evidence", {})
-        paths: list[dict[str, Any]] = []
-        embedded = [str(path) for path in evidence.get("embedded_paths", ())]
-        if embedded:
-            wheel_path = artifact_cache_path(cache_root, artifact)
-            inspection = inspect_wheel(wheel_path, artifact)
-            with zipfile.ZipFile(wheel_path) as archive:
-                members = inspection.members
-                for source_path in embedded:
-                    source_key = windows_path_key(source_path)
-                    info = members.get(source_key)
-                    if info is None or info.is_dir():
-                        raise LicenseGateError(
-                            [
-                                {
-                                    "id": f"{identifier}-embedded-license-missing",
-                                    "component": identifier,
-                                    "reason": (
-                                        f"declared embedded license {source_path!r} "
-                                        "is absent from locked wheel"
-                                    ),
-                                }
-                            ]
-                        )
-                    with archive.open(info, "r") as source:
-                        data = source.read()
-                    relative_tail = PurePosixPath(source_path).as_posix()
-                    validate_windows_relative_path(relative_tail)
-                    destination = (
-                        license_root
-                        / "python"
-                        / f"{canonical_distribution_name(str(artifact['name']))}"
-                        f"-{artifact['version']}"
-                        / Path(*PurePosixPath(relative_tail).parts)
-                    )
-                    details = _copy_license_bytes(
-                        destination,
-                        data,
-                        source=f"{artifact['filename']}!/{source_path}",
-                    )
-                    paths.append(remember(details))
-        components.append(
-            {
-                "component": identifier,
-                "expression": license_info.get("expression"),
-                "status": license_info.get("status"),
-                "redistributable": license_info.get("redistributable"),
-                "evidence_ids": _declared_evidence_ids(artifact),
-                "files": paths,
-            }
-        )
-
-    for artifact in locks.runtime_resources:
-        identifier = _artifact_license_identifier(artifact)
-        paths: list[dict[str, Any]] = []
-        if artifact.get("kind") == "python_embeddable_runtime":
-            source = stage_root / "runtime" / "LICENSE.txt"
-            if source.is_file():
-                data = source.read_bytes()
-                details = _copy_license_bytes(
-                    license_root
-                    / "resources"
-                    / f"CPython-{artifact['version']}"
-                    / "LICENSE.txt",
-                    data,
-                    source="runtime/LICENSE.txt",
-                )
-                paths.append(remember(details))
-        elif artifact.get("kind") == "font":
-            for selected in artifact.get("unpack", {}).get("selected_files", ()):
-                locked_destination = str(selected.get("destination_path", ""))
-                if not locked_destination.startswith("licenses/"):
-                    continue
-                staged = (
-                    license_root / "resources" / locked_destination[len("licenses/") :]
-                )
-                if not staged.is_file():
-                    raise LicenseGateError(
-                        [
-                            {
-                                "id": f"{identifier}-license-missing",
-                                "component": identifier,
-                                "reason": f"staged font license is absent: {staged}",
-                            }
-                        ]
-                    )
-                digest, size = sha256_file(staged)
-                if digest != selected["sha256"] or size != selected["size"]:
-                    raise HashMismatchError(f"staged font license mismatch: {staged}")
-                paths.append(
-                    remember(
-                        {
-                            "path": staged.as_posix(),
-                            "sha256": digest,
-                            "size": size,
-                            "source": (
-                                f"{artifact['filename']}!/{selected['source_path']}"
-                            ),
-                        }
-                    )
-                )
-        license_info = artifact["license"]
-        components.append(
-            {
-                "component": identifier,
-                "expression": license_info.get("expression"),
-                "status": license_info.get("status"),
-                "redistributable": license_info.get("redistributable"),
-                "evidence_ids": _declared_evidence_ids(artifact),
-                "files": paths,
-            }
-        )
-
-    evidence_by_id = {str(item["id"]): item for item in locks.external_evidence}
-    referenced_evidence = sorted(
-        {
-            evidence_id
-            for artifact in locks.all_runtime_artifacts
-            for evidence_id in _declared_evidence_ids(artifact)
-        }
-        | {
-            str(evidence_id)
-            for obligation in locks.licenses.get("release_obligations", ())
-            if obligation.get("blocks_release") is True
-            for evidence_id in obligation.get("evidence_ids", ())
-        }
-    )
-    collected_evidence: list[dict[str, Any]] = []
-    for identifier in referenced_evidence:
-        evidence = evidence_by_id.get(identifier)
-        if evidence is None:
-            raise LockValidationError(
-                f"referenced external evidence is not locked: {identifier}"
-            )
-        cached = evidence_cache_path(cache_root, evidence)
-        verify_file(cached, str(evidence["sha256"]), int(evidence["size"]))
-        data, suffix, source = _locked_external_evidence_payload(cached, evidence)
-        if not re.fullmatch(r"\.[A-Za-z0-9]{1,8}", suffix):
-            suffix = ".evidence"
-        destination = license_root / "evidence" / f"{identifier}{suffix.lower()}"
-        details = _copy_license_bytes(
-            destination,
-            data,
-            source=source,
-        )
-        collected_evidence.append(
-            {
-                **remember(details),
-                "id": identifier,
-                "status": evidence.get("status"),
-                "relationship": evidence.get("relationship"),
-            }
-        )
-
-    blockers = evaluate_license_gate(locks)
-    files_on_disk = sorted(
-        path.relative_to(stage_root).as_posix()
-        for path in license_root.rglob("*")
-        if path.is_file() and path.name != "INDEX.json"
-    )
-    indexed_files = sorted(
-        [file["path"] for component in components for file in component["files"]]
-        + [item["path"] for item in collected_evidence]
-    )
-    if files_on_disk != indexed_files:
-        raise PipelineError(
-            "license collection is not bidirectional: filesystem and index differ"
-        )
-    index = {
-        "schema_version": "1.0.0",
-        "scope": locks.licenses.get("policy", {}).get("scope"),
-        "release_gate_passed": not blockers,
-        "components": components,
-        "external_evidence": collected_evidence,
-        "files": indexed_files,
-        "blockers": blockers,
-    }
-    write_canonical_json(license_root / "INDEX.json", index)
-    if enforce_release_gate and blockers:
-        raise LicenseGateError(blockers)
-    return {
-        "passed": not blockers,
-        "component_count": len(components),
-        "file_count": len(indexed_files),
-        "blockers": blockers,
     }
 
 
@@ -3126,7 +2464,6 @@ _ALLOWED_TOP_LEVEL = frozenset(
         "models",
         "assets",
         "data",
-        "LICENSES",
         "README.zh-CN.md",
         BUILD_MANIFEST_NAME,
         STAGING_STATE_NAME,
@@ -3147,12 +2484,11 @@ def validate_staging_paths(stage_root: Path) -> dict[str, Any]:
         "runtime/python313._pth",
         "runtime/qt.conf",
         "assets/fonts",
-        "models/PP-OCRv6_medium_det",
-        "models/PP-OCRv6_medium_rec",
+        "models/PP-OCRv6_small_det",
+        "models/PP-OCRv6_small_rec",
         "data",
         "runtime/pdx-cache",
         "runtime/pdx-cache/temp",
-        "LICENSES/INDEX.json",
     ):
         path = safe_destination(stage_root, required)
         if not path.exists():
@@ -3173,7 +2509,6 @@ def create_build_manifest(
     resources: Sequence[Mapping[str, Any]],
     bytecode: Mapping[str, Any],
     native: Mapping[str, Any],
-    licenses: Mapping[str, Any],
     pe_validation: Mapping[str, Any],
 ) -> dict[str, Any]:
     files = inventory_tree(
@@ -3199,7 +2534,6 @@ def create_build_manifest(
         "resources": list(resources),
         "bytecode": dict(bytecode),
         "native": dict(native),
-        "licenses": dict(licenses),
         "pe_validation": {
             "pe_count": pe_validation["pe_count"],
             "duplicate_dlls": pe_validation["duplicate_dlls"],
@@ -3243,7 +2577,6 @@ def write_staging_state(
     stage_root: Path,
     *,
     profile: str,
-    licenses_passed: bool,
 ) -> dict[str, Any]:
     manifest_path = stage_root / BUILD_MANIFEST_NAME
     if not manifest_path.is_file():
@@ -3254,7 +2587,6 @@ def write_staging_state(
     state = {
         "schema_version": "1.0.0",
         "profile": profile,
-        "licenses_passed": licenses_passed,
         "manifest_sha256": sha256_file(manifest_path)[0],
         "tree_digest": tree_digest(inventory),
     }
@@ -3262,23 +2594,14 @@ def write_staging_state(
     return state
 
 
-def verify_saved_staging_for_release(stage_root: Path) -> dict[str, Any]:
+def verify_saved_staging_for_package(stage_root: Path) -> dict[str, Any]:
     state_path = stage_root / STAGING_STATE_NAME
     if not state_path.is_file():
-        raise PipelineError("release packaging requires a saved staging state")
+        raise PipelineError("packaging requires a saved staging state")
     state = load_json_object(state_path)
-    if state.get("profile") != "release" or state.get("licenses_passed") is not True:
-        raise LicenseGateError(
-            [
-                {
-                    "id": "saved-staging-not-redistributable",
-                    "component": str(stage_root),
-                    "reason": (
-                        "only profile=release staging with licenses_passed=true "
-                        "may be packaged"
-                    ),
-                }
-            ]
+    if state.get("profile") != "private-use":
+        raise PipelineError(
+            "only profile=private-use staging may be packaged"
         )
     manifest_path = stage_root / BUILD_MANIFEST_NAME
     if sha256_file(manifest_path)[0] != state.get("manifest_sha256"):
@@ -3289,16 +2612,8 @@ def verify_saved_staging_for_release(stage_root: Path) -> dict[str, Any]:
     if tree_digest(inventory) != state.get("tree_digest"):
         raise PipelineError("staging tree changed after validation")
     manifest = validate_build_manifest(stage_root)
-    if manifest.get("licenses", {}).get("passed") is not True:
-        raise LicenseGateError(
-            [
-                {
-                    "id": "manifest-license-gate-failed",
-                    "component": BUILD_MANIFEST_NAME,
-                    "reason": "manifest does not attest a passed license gate",
-                }
-            ]
-        )
+    if manifest.get("profile") != "private-use":
+        raise PipelineError("BUILD_MANIFEST profile is not private-use")
     return state
 
 
@@ -3379,14 +2694,11 @@ def build_deterministic_zip(
     locks: LockSet,
     product_directory: str = PRODUCT_NAME,
 ) -> dict[str, Any]:
-    """Package only a current-lock release staging that passes every gate."""
+    """Package only a current-lock private-use staging."""
 
     validate_lock_set(locks)
-    blockers = evaluate_license_gate(locks)
-    if blockers:
-        raise LicenseGateError(blockers)
     static_verify_staging(locks=locks, stage_root=stage_root)
-    verify_saved_staging_for_release(stage_root)
+    verify_saved_staging_for_package(stage_root)
     return _write_deterministic_zip(
         stage_root,
         output_zip,
@@ -3465,12 +2777,7 @@ def verify_saved_staging(stage_root: Path) -> dict[str, Any]:
 def publish_staging(
     temporary: Path,
     output_stage: Path,
-    *,
-    profile: str,
-    license_report: Mapping[str, Any],
 ) -> None:
-    if profile == "release" and license_report.get("passed") is not True:
-        raise LicenseGateError(license_report.get("blockers", ()))
     os.replace(temporary, output_stage)
 
 
@@ -3487,7 +2794,7 @@ def stage_portable_tree(
     toolchain_prefix: str,
     profile: str,
 ) -> dict[str, Any]:
-    if profile not in {"release", "nonredistributable-test"}:
+    if profile != "private-use":
         raise PipelineError(f"unknown staging profile {profile!r}")
     if output_stage.exists():
         raise PipelineError(f"staging destination already exists: {output_stage}")
@@ -3532,14 +2839,6 @@ def stage_portable_tree(
         )
         if native.get("tray_icon"):
             native["tray_icon"]["path"] = "assets/icons/textsnap.ico"
-        licenses = collect_licenses(
-            locks,
-            cache_root,
-            temporary,
-            enforce_release_gate=False,
-        )
-        if profile == "release" and not licenses["passed"]:
-            raise LicenseGateError(licenses["blockers"])
         paths = validate_staging_paths(temporary)
         models = verify_locked_models(locks, temporary)
         pe_validation = validate_pe_tree(temporary)
@@ -3569,21 +2868,14 @@ def stage_portable_tree(
             resources=resources,
             bytecode=bytecode,
             native=native,
-            licenses=licenses,
             pe_validation=pe_validation,
         )
         write_staging_state(
             temporary,
             profile=profile,
-            licenses_passed=bool(licenses["passed"]),
         )
         verify_saved_staging(temporary)
-        publish_staging(
-            temporary,
-            output_stage,
-            profile=profile,
-            license_report=licenses,
-        )
+        publish_staging(temporary, output_stage)
         completed = True
         result = {
             "profile": profile,
@@ -3598,7 +2890,6 @@ def stage_portable_tree(
             "pe_count": pe_validation["pe_count"],
             "duplicate_dlls": pe_validation["duplicate_dlls"],
             "load_path_pending": pe_validation["load_path_pending"],
-            "licenses": licenses,
         }
         return result
     finally:
@@ -3619,25 +2910,8 @@ def static_verify_staging(
     manifest = validate_build_manifest(stage_root)
     if manifest.get("lock_inputs") != locks.input_hashes():
         raise PipelineError("staging was built from different lock bytes")
-    index = load_json_object(stage_root / "LICENSES" / "INDEX.json")
-    blockers = evaluate_license_gate(locks)
-    expected_passed = not blockers
-    if index.get("blockers") != blockers:
-        raise PipelineError("license index blockers differ from the current lock")
-    if index.get("release_gate_passed") is not expected_passed:
-        raise PipelineError("license index gate differs from the current lock")
-    manifest_licenses = manifest.get("licenses", {})
-    if (
-        manifest_licenses.get("passed") is not expected_passed
-        or manifest_licenses.get("blockers") != blockers
-        or state.get("licenses_passed") is not expected_passed
-    ):
-        raise PipelineError(
-            "saved state, build manifest, and current license gate disagree"
-        )
     return {
         "profile": state.get("profile"),
-        "licenses_passed": state.get("licenses_passed"),
         "paths": paths,
         "model_count": len(models),
         "pe_count": pe["pe_count"],

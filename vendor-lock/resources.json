@@ -46,20 +46,6 @@
           "file_version": "14.42.34438.0"
         }
       ],
-      "license": {
-        "expression": "PSF-2.0",
-        "redistributable": null,
-        "status": "pending",
-        "evidence_ids": [
-          "cpython-v3.13.14-license",
-          "msvc-runtime-2015-2022-terms",
-          "msvc-runtime-redistribution-guidance"
-        ],
-        "notes": [
-          "The archive carries LICENSE.txt, but Microsoft runtime redistribution terms must be reviewed and retained before release.",
-          "The archive LICENSE.txt hash intentionally differs from the CPython source-tree LICENSE hash and is locked above."
-        ]
-      },
       "verification": {
         "status": "verified",
         "method": "downloaded from python.org; archive size and SHA-256 recomputed; selected members hashed",
@@ -67,13 +53,13 @@
       }
     },
     {
-      "id": "pp-ocrv6-medium-det-inference",
+      "id": "pp-ocrv6-small-det-inference",
       "kind": "paddle_inference_model",
-      "version": "PP-OCRv6_medium_det",
-      "filename": "PP-OCRv6_medium_det_infer.tar",
-      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_medium_det_infer.tar",
-      "size": 62279680,
-      "sha256": "144d0621e059566e5086e228829171591c144c2deb07b2dad4962214fbabfcf7",
+      "version": "PP-OCRv6_small_det",
+      "filename": "PP-OCRv6_small_det_infer.tar",
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_small_det_infer.tar",
+      "size": 10055680,
+      "sha256": "bfb7c1e59f0faa6b540ebdca93aea3f4b1f2477805b389fbee117820d68fe9f5",
       "target": {
         "usage": "windows_runtime",
         "framework": "PaddlePaddle",
@@ -81,41 +67,28 @@
       },
       "unpack": {
         "format": "tar",
-        "archive_root": "PP-OCRv6_medium_det_infer/",
-        "destination_root": "models/PP-OCRv6_medium_det/",
+        "archive_root": "PP-OCRv6_small_det_infer/",
+        "destination_root": "models/PP-OCRv6_small_det/",
         "reject_unsafe_paths": true,
         "files": [
           {
-            "source_path": "PP-OCRv6_medium_det_infer/inference.json",
+            "source_path": "PP-OCRv6_small_det_infer/inference.json",
             "destination_path": "inference.json",
-            "size": 312150,
-            "sha256": "0f1a7ec35da36173529c7a60238b7f7919e3831929c3f700ad90ad4896adecd5"
+            "size": 229307,
+            "sha256": "89240f689a4a77aad75ef55a8df0a15c8e1d4980a327d17e58f24bbadde5aeab"
           },
           {
-            "source_path": "PP-OCRv6_medium_det_infer/inference.pdiparams",
+            "source_path": "PP-OCRv6_small_det_infer/inference.pdiparams",
             "destination_path": "inference.pdiparams",
-            "size": 61960476,
-            "sha256": "85218d2e3d98f5a21c58b4220627be923a97aee5db3cc71f39536ab31ac53960"
+            "size": 9817888,
+            "sha256": "5043d4ccc8d63402ccea8feefcee4db57077431a873e78d2191836a178a492da"
           },
           {
-            "source_path": "PP-OCRv6_medium_det_infer/inference.yml",
+            "source_path": "PP-OCRv6_small_det_infer/inference.yml",
             "destination_path": "inference.yml",
-            "size": 886,
-            "sha256": "7298d5ead546584af2504d03355f881ac7a7bc0eb1e282d3e159277c1d0af871"
+            "size": 885,
+            "sha256": "193f435274bf9f0b5f71a929bbfbcf148282df7e633b34e7c373e8f44741b516"
           }
-        ]
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": null,
-        "status": "pending",
-        "evidence_ids": [
-          "paddleocr-v3.7.0-license",
-          "pp-ocrv6-medium-det-model-card"
-        ],
-        "notes": [
-          "The BOS tar contains no license file.",
-          "The official same-name Hugging Face model card declares Apache-2.0, but its model files are not byte-identical to this BOS archive; publisher confirmation tying the license to these exact bytes remains pending."
         ]
       },
       "verification": {
@@ -125,13 +98,13 @@
       }
     },
     {
-      "id": "pp-ocrv6-medium-rec-inference",
+      "id": "pp-ocrv6-small-rec-inference",
       "kind": "paddle_inference_model",
-      "version": "PP-OCRv6_medium_rec",
-      "filename": "PP-OCRv6_medium_rec_infer.tar",
-      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_medium_rec_infer.tar",
-      "size": 76851200,
-      "sha256": "4eecc1c6a4623765042e6fc15446da0da110b7d875b6b72b2d351d2b2dbd4da6",
+      "version": "PP-OCRv6_small_rec",
+      "filename": "PP-OCRv6_small_rec_infer.tar",
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_small_rec_infer.tar",
+      "size": 21442560,
+      "sha256": "da460f968ce9f88325ac3a34fa302077d6e9b0dcefb16ba3137cd7796f879d06",
       "target": {
         "usage": "windows_runtime",
         "framework": "PaddlePaddle",
@@ -139,41 +112,28 @@
       },
       "unpack": {
         "format": "tar",
-        "archive_root": "PP-OCRv6_medium_rec_infer/",
-        "destination_root": "models/PP-OCRv6_medium_rec/",
+        "archive_root": "PP-OCRv6_small_rec_infer/",
+        "destination_root": "models/PP-OCRv6_small_rec/",
         "reject_unsafe_paths": true,
         "files": [
           {
-            "source_path": "PP-OCRv6_medium_rec_infer/inference.json",
+            "source_path": "PP-OCRv6_small_rec_infer/inference.json",
             "destination_path": "inference.json",
-            "size": 221814,
-            "sha256": "0b2e25e990bd072f1bf77d59d67d508bce6c4bd44af6624e0fb27d6da2cd00e8"
+            "size": 208004,
+            "sha256": "f0bf53c853937a917affdd74467472167727f8ab0f0f7bded01c4a16c27e46e6"
           },
           {
-            "source_path": "PP-OCRv6_medium_rec_infer/inference.pdiparams",
+            "source_path": "PP-OCRv6_small_rec_infer/inference.pdiparams",
             "destination_path": "inference.pdiparams",
-            "size": 76465087,
-            "sha256": "1b01c79a914587933f615569e75de54f2e638ebb5d3f3b3c1b38c24ede8c7319"
+            "size": 21074618,
+            "sha256": "406e1e689c9a7fbb04178007a3fe10cf852afe7bf8bb3bc6dbb9d532b13bd907"
           },
           {
-            "source_path": "PP-OCRv6_medium_rec_infer/inference.yml",
+            "source_path": "PP-OCRv6_small_rec_infer/inference.yml",
             "destination_path": "inference.yml",
-            "size": 150580,
-            "sha256": "991b700facf5b50a7de193468207d5f4255b538dde0d312ae3b7c7a9b6873129"
+            "size": 150579,
+            "sha256": "ab078671bb49f06228eadccd34f1bb501e157f7a047095ffb943ba81512c77d1"
           }
-        ]
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": null,
-        "status": "pending",
-        "evidence_ids": [
-          "paddleocr-v3.7.0-license",
-          "pp-ocrv6-medium-rec-model-card"
-        ],
-        "notes": [
-          "The BOS tar contains no license file.",
-          "The official same-name Hugging Face model card declares Apache-2.0, but its model files are not byte-identical to this BOS archive; publisher confirmation tying the license to these exact bytes remains pending."
         ]
       },
       "verification": {
@@ -203,43 +163,26 @@
             "destination_path": "fonts/NotoSansMonoCJKsc-Regular.otf",
             "size": 16393784,
             "sha256": "ec04cc376b34887cedbdf84074e2e226ed2761eeabdcb9173fc1dd7bfd153ef7"
-          },
-          {
-            "source_path": "LICENSE",
-            "destination_path": "licenses/NotoSansMonoCJKsc-OFL-1.1.txt",
-            "size": 4301,
-            "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2"
           }
         ],
         "excluded_files": [
           "NotoSansMonoCJKsc-Bold.otf"
         ]
       },
-      "license": {
-        "expression": "OFL-1.1",
-        "redistributable": true,
-        "status": "verified",
-        "evidence_ids": [
-          "noto-cjk-sans2.004-ofl"
-        ],
-        "notes": [
-          "The release archive embeds the same OFL-1.1 text hash as the immutable upstream evidence."
-        ]
-      },
       "verification": {
         "status": "verified",
-        "method": "GitHub release asset downloaded; archive, selected OTF and embedded license hashed",
+        "method": "GitHub release asset downloaded; archive and selected OTF hashed",
         "verified_at": "2026-07-25"
       }
     },
     {
-      "id": "paddlepaddle-3.3.1-cp312-linux-aarch64-integration",
+      "id": "paddlepaddle-3.2.2-cp312-linux-aarch64-integration",
       "kind": "integration_test_wheel",
-      "version": "3.3.1",
-      "filename": "paddlepaddle-3.3.1-cp312-cp312-linux_aarch64.whl",
-      "url": "https://paddle-whl.bj.bcebos.com/stable/cpu/paddlepaddle/paddlepaddle-3.3.1-cp312-cp312-linux_aarch64.whl",
-      "size": 91985939,
-      "sha256": "1302baafdf91e4f4f2108622219d8b519e5593a908c3d7b95d5a9ef24ba48019",
+      "version": "3.2.2",
+      "filename": "paddlepaddle-3.2.2-cp312-cp312-linux_aarch64.whl",
+      "url": "https://paddle-whl.bj.bcebos.com/stable/cpu/paddlepaddle/paddlepaddle-3.2.2-cp312-cp312-linux_aarch64.whl",
+      "size": 88147129,
+      "sha256": "a59d9020ba160fa7f5aefcb30e4a6329390a635d1a0b511f6458139376c03f99",
       "wheel_tags": [
         "cp312-cp312-linux_aarch64"
       ],
@@ -249,18 +192,6 @@
         "python_version": "3.12",
         "usage": "integration_tests_only",
         "include_in_windows_zip": false
-      },
-      "license": {
-        "expression": "Apache-2.0",
-        "redistributable": null,
-        "status": "pending",
-        "evidence_ids": [
-          "paddlepaddle-v3.3.1-license"
-        ],
-        "notes": [
-          "PaddlePaddle package license is known, but bundled native dependency notices have not been completed.",
-          "This host-only integration artifact must never be copied into the Windows distribution."
-        ]
       },
       "verification": {
         "status": "verified",

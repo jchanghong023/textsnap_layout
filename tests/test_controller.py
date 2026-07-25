@@ -246,7 +246,7 @@ class _Overlay:
         self.cancelled = _Signal()
         self.visible = False
         self.closed = False
-        self.target_screen = object()
+        self.target_screen = _Screen()
 
     def show(self) -> None:
         self.visible = True
@@ -260,6 +260,11 @@ class _Overlay:
 
     def screen(self) -> object:
         return self.target_screen
+
+
+class _Screen:
+    def availableGeometry(self) -> QRect:  # noqa: N802
+        return QRect(100, 200, 1000, 500)
 
 
 class _Hotkeys:
@@ -660,7 +665,7 @@ class ControllerTests(unittest.TestCase):
         harness.controller.request_capture()
         harness.overlays[-1].selection_submitted.emit(QRect(0, 0, 3, 2))
         task_id = harness.controller.active_task_id
-        old_target = harness.overlays[-1].target_screen
+        old_target = harness.overlays[-1].target_screen.availableGeometry()
         harness.worker.task_finished.emit(task_id, Success(old))
 
         harness.controller.request_capture()

@@ -331,9 +331,14 @@ class ApplicationController(QObject):
             self._selection_overlay = overlay
             overlay.show()
             screen_getter = getattr(overlay, "screen", None)
-            self._task_result_target = (
-                screen_getter() if callable(screen_getter) else None
-            )
+            target_screen = screen_getter() if callable(screen_getter) else None
+            if isinstance(target_screen, QRect):
+                self._task_result_target = QRect(target_screen)
+            else:
+                geometry_getter = getattr(target_screen, "availableGeometry", None)
+                self._task_result_target = (
+                    QRect(geometry_getter()) if callable(geometry_getter) else None
+                )
             return True
         except Exception:
             self._capture_frame = None
