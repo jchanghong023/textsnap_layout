@@ -145,6 +145,7 @@ class ControlledCorpusTests(unittest.TestCase):
         for anchor in (
             *line_anchors,
             *rendering["geometry_anchors"],
+            *rendering["recognition_anchors"],
             *rendering["seam_anchors"],
         ):
             with self.subTest(render_anchor=anchor):

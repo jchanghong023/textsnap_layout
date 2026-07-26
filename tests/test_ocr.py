@@ -17,6 +17,11 @@ from textsnap.layout import build_layout
 from textsnap.ocr import (
     DETECTION_MODEL_NAME,
     RECOGNITION_MODEL_NAME,
+    SMALL_TEXT_CROP_HEIGHT,
+    SMALL_TEXT_SCALE_FACTOR,
+    WIDE_TEXT_HORIZONTAL_SCALE_FACTOR,
+    WIDE_TEXT_MAX_HEIGHT,
+    WIDE_TEXT_MIN_ASPECT_RATIO,
     LocalModelSpec,
     OcrEngine,
     _OpenCvImageBackend,
@@ -88,6 +93,8 @@ class FakeImageBackend:
     def __init__(self) -> None:
         self.perspective_quads = []
         self.detector_inputs = []
+        self.enhanced_crops = []
+        self.stretched_crops = []
 
     def normalize_bgr(self, image):
         if (
@@ -126,6 +133,19 @@ class FakeImageBackend:
             height,
             width,
             tag=("crop", quad),
+            contiguous=True,
+        )
+
+    def enhance_recognition_crop(self, image):
+        self.enhanced_crops.append(image)
+        return image
+
+    def stretch_recognition_crop(self, image):
+        self.stretched_crops.append(image)
+        return ControlledNdarray(
+            image.shape[0],
+            round(image.shape[1] * WIDE_TEXT_HORIZONTAL_SCALE_FACTOR),
+            tag=("stretched", image.tag),
             contiguous=True,
         )
 
@@ -351,6 +371,7 @@ class OcrEngineTests(unittest.TestCase):
             backend.perspective_quads,
             [_quad(1000, 100, 1350, 121)],
         )
+        self.assertEqual(len(backend.enhanced_crops), 1)
         self.assertEqual(
             [image.tag[1] for image in backend.detector_inputs],
             [0, 1088, 2176],
@@ -411,6 +432,47 @@ class OcrEngineTests(unittest.TestCase):
             if image.tag[0] == "rotated"
         }
         self.assertEqual(rotations, {90, 180, 270})
+
+    def test_dense_code_outline_uses_targeted_horizontal_retry(self) -> None:
+        box = _quad(0, 0, 500, 20)
+        initial_text = (
+            "@0|_init_.py|TARGET_AST_UNAVAILABLE;"
+            "M1|_init_.py::module|UNAVAILABLE|"
+        )
+        improved_text = (
+            "@0|__init__.py|TARGET_AST_UNAVAILABLE;"
+            "M1|__init__.py::module|UNAVAILABLE|"
+        )
+
+        def detector(image, batch_size):
+            if image.tag == "warmup":
+                return [{}]
+            return [{"dt_polys": [box], "dt_scores": [0.9]}]
+
+        def recognizer(images, batch_size):
+            if images and images[0].tag == "warmup":
+                return [{}]
+            return [
+                {
+                    "rec_text": (
+                        improved_text
+                        if image.tag[0] == "stretched"
+                        else initial_text
+                    ),
+                    "rec_score": 0.98 if image.tag[0] == "stretched" else 0.99,
+                }
+                for image in images
+            ]
+
+        engine, factory, backend = self._engine(detector, recognizer)
+        self.assertIsNone(engine.initialize())
+
+        outcome = engine.recognize(ControlledNdarray(40, 500))
+
+        self.assertIsInstance(outcome, Success)
+        self.assertEqual(outcome.result.text, improved_text)
+        self.assertEqual(len(backend.stretched_crops), 1)
+        self.assertEqual(len(factory.recognizer.calls[1:]), 2)
 
     def test_only_exact_empty_string_is_dropped_before_blank_layout(self) -> None:
         boxes = [_quad(0, 0, 20, 20), _quad(40, 0, 60, 20)]
@@ -675,6 +737,59 @@ class OpenCvImageBackendTests(unittest.TestCase):
             with self.subTest(quad=quad):
                 with self.assertRaises(ValueError):
                     backend.perspective_crop(image, quad)
+
+    def test_tiny_recognition_crop_is_cubically_upscaled_and_contiguous(self) -> None:
+        import numpy
+
+        backend = _OpenCvImageBackend()
+        image = numpy.zeros(
+            (SMALL_TEXT_CROP_HEIGHT - 1, 37, 3),
+            dtype=numpy.uint8,
+        )
+
+        enhanced = backend.enhance_recognition_crop(image)
+
+        self.assertEqual(
+            enhanced.shape,
+            (
+                (SMALL_TEXT_CROP_HEIGHT - 1) * SMALL_TEXT_SCALE_FACTOR,
+                37 * SMALL_TEXT_SCALE_FACTOR,
+                3,
+            ),
+        )
+        self.assertTrue(enhanced.flags.c_contiguous)
+        self.assertIsNot(enhanced, image)
+
+    def test_non_tiny_recognition_crop_is_not_resampled(self) -> None:
+        import numpy
+
+        backend = _OpenCvImageBackend()
+        image = numpy.zeros(
+            (SMALL_TEXT_CROP_HEIGHT, 1000, 3),
+            dtype=numpy.uint8,
+        )
+
+        self.assertIs(backend.enhance_recognition_crop(image), image)
+
+    def test_explicit_code_retry_crop_is_only_stretched_horizontally(self) -> None:
+        import numpy
+
+        backend = _OpenCvImageBackend()
+        height = WIDE_TEXT_MAX_HEIGHT
+        width = int(height * WIDE_TEXT_MIN_ASPECT_RATIO)
+        image = numpy.zeros((height, width, 3), dtype=numpy.uint8)
+
+        enhanced = backend.stretch_recognition_crop(image)
+
+        self.assertEqual(
+            enhanced.shape,
+            (
+                height,
+                int(round(width * WIDE_TEXT_HORIZONTAL_SCALE_FACTOR)),
+                3,
+            ),
+        )
+        self.assertTrue(enhanced.flags.c_contiguous)
 
 
 if __name__ == "__main__":

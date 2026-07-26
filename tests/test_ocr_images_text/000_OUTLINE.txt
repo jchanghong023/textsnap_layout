@@ -1,0 +1,18 @@
+PYTHON_OCR_OUTLINE_V3 WIDTH=200
+@0|__init__.py|TARGET_AST_UNAVAILABLE;M1|__init__.py::module|UNAVAILABLE|;@0|claude_file_reporter/__init__.py|TARGET_AST_UNAVAILABLE;M1|claude_file_reporter/__init__.py::module|UNAVAILABLE|;@0|claude_
+file_reporter/__main__.py|TARGET_AST_UNAVAILABLE;M1|claude_file_reporter/__main__.py::module|UNAVAILABLE|;@0|claude_file_reporter/aggregation.py|TARGET_AST_UNAVAILABLE;M1|claude_file_reporter/aggregat
+ion.py::module|UNAVAILABLE|;@0|claude_file_reporter/cli.py|TARGET_AST_UNAVAILABLE;M1|claude_file_reporter/cli.py::module|UNAVAILABLE|;@0|claude_file_reporter/process_control.py|TARGET_AST_UNAVAILABLE;
+M1|claude_file_reporter/process_control.py::module|UNAVAILABLE|;@0|claude_file_reporter/safe_fs.py|TARGET_AST_UNAVAILABLE;M1|claude_file_reporter/safe_fs.py::module|UNAVAILABLE|;@0|claude_file_reporte
+r/workflow.py|TARGET_AST_UNAVAILABLE;M1|claude_file_reporter/workflow.py::module|UNAVAILABLE|;@0|dft_project_analyzer/__init__.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/__init__.py::module|UNA
+VAILABLE|;@0|dft_project_analyzer/__main__.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/__main__.py::module|UNAVAILABLE|;@0|dft_project_analyzer/classify.py|TARGET_AST_UNAVAILABLE;M1|dft_project_
+analyzer/classify.py::module|UNAVAILABLE|;@0|dft_project_analyzer/cli.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/cli.py::module|UNAVAILABLE|;@0|dft_project_analyzer/config_parser.py|TARGET_AST_
+UNAVAILABLE;M1|dft_project_analyzer/config_parser.py::module|UNAVAILABLE|;@0|dft_project_analyzer/correlate.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/correlate.py::module|UNAVAILABLE|;@0|dft_p
+roject_analyzer/derive.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/derive.py::module|UNAVAILABLE|;@0|dft_project_analyzer/filesystem.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/filesystem.
+py::module|UNAVAILABLE|;@0|dft_project_analyzer/hdl.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/hdl.py::module|UNAVAILABLE|;@0|dft_project_analyzer/log_parser.py|TARGET_AST_UNAVAILABLE;M1|dft_pr
+oject_analyzer/log_parser.py::module|UNAVAILABLE|;@0|dft_project_analyzer/model.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/model.py::module|UNAVAILABLE|;@0|dft_project_analyzer/output.py|TARGET
+_AST_UNAVAILABLE;M1|dft_project_analyzer/output.py::module|UNAVAILABLE|;@0|dft_project_analyzer/reader.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/reader.py::module|UNAVAILABLE|;@0|dft_project_a
+nalyzer/report.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/report.py::module|UNAVAILABLE|;@0|dft_project_analyzer/workflow.py|TARGET_AST_UNAVAILABLE;M1|dft_project_analyzer/workflow.py::module|U
+NAVAILABLE|;@0|env_to_csh.py|TARGET_AST_UNAVAILABLE;M1|env_to_csh.py::module|UNAVAILABLE|;@0|git_push_helper/__init__.py|TARGET_AST_UNAVAILABLE;M1|git_push_helper/__init__.py::module|UNAVAILABLE|;@0|g
+it_push_helper/__main__.py|TARGET_AST_UNAVAILABLE;M1|git_push_helper/__main__.py::module|UNAVAILABLE|;@0|git_push_helper/cli.py|TARGET_AST_UNAVAILABLE;M1|git_push_helper/cli.py::module|UNAVAILABLE|;@0
+|git_push_helper/errors.py|TARGET_AST_UNAVAILABLE;M1|git_push_helper/errors.py::module|UNAVAILABLE|;@0|git_push_helper/git.py|TARGET_AST_UNAVAILABLE;M1|git_push_helper/git.py::module|UNAVAILABLE|;@0|g
+

@@ -35,6 +35,12 @@ from .tiling import generate_tiles, internal_edge_metrics, map_quad_to_global
 DETECTION_MODEL_NAME = "PP-OCRv6_small_det"
 RECOGNITION_MODEL_NAME = "PP-OCRv6_small_rec"
 RECOGNITION_BATCH_SIZE = 8
+SMALL_TEXT_CROP_HEIGHT = 20
+SMALL_TEXT_SCALE_FACTOR = 2
+WIDE_TEXT_MAX_HEIGHT = 40
+WIDE_TEXT_MIN_ASPECT_RATIO = 12.0
+WIDE_TEXT_HORIZONTAL_SCALE_FACTOR = 1.5
+CODE_STRETCH_SCORE_TOLERANCE = 0.02
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 _MODEL_WORKING_DIRECTORY_LOCK = RLock()
 _DEFAULT_ENGINE_CONFIG = MappingProxyType(
@@ -98,6 +104,10 @@ class ImageBackend(Protocol):
     def tile(self, image: object, tile: TileRegion) -> object: ...
 
     def perspective_crop(self, image: object, quad: Quad) -> object: ...
+
+    def enhance_recognition_crop(self, image: object) -> object: ...
+
+    def stretch_recognition_crop(self, image: object) -> object: ...
 
     def rotate(self, image: object, degrees: int) -> object: ...
 
@@ -221,6 +231,42 @@ class _OpenCvImageBackend:
         )
         return numpy.ascontiguousarray(crop)
 
+    def enhance_recognition_crop(self, image: object) -> object:
+        """Preserve thin glyph strokes before Paddle normalizes tiny crops.
+
+        The locked recognizer normalizes lines to a 48-pixel input height.
+        Letting it enlarge a very small screen crop in one step loses more
+        one-pixel punctuation and underscore detail than a prior cubic 2x
+        interpolation. Other crops are returned unchanged; dense code-like
+        lines receive a separate targeted horizontal retry after their first
+        recognition result is available.
+        """
+
+        height, width = image.shape[:2]
+        if height < SMALL_TEXT_CROP_HEIGHT:
+            output_width = width * SMALL_TEXT_SCALE_FACTOR
+            output_height = height * SMALL_TEXT_SCALE_FACTOR
+        else:
+            return image
+        enhanced = self._cv2.resize(
+            image,
+            (output_width, output_height),
+            interpolation=self._cv2.INTER_CUBIC,
+        )
+        return self._numpy.ascontiguousarray(enhanced)
+
+    def stretch_recognition_crop(self, image: object) -> object:
+        height, width = image.shape[:2]
+        stretched = self._cv2.resize(
+            image,
+            (
+                int(round(width * WIDE_TEXT_HORIZONTAL_SCALE_FACTOR)),
+                height,
+            ),
+            interpolation=self._cv2.INTER_CUBIC,
+        )
+        return self._numpy.ascontiguousarray(stretched)
+
     def rotate(self, image: object, degrees: int) -> object:
         if degrees not in {90, 180, 270}:
             raise ValueError("rotation must be 90, 180, or 270 degrees")
@@ -239,7 +285,19 @@ class _CropRecord:
     crop: object | None = field(repr=False)
     width: int
     height: int
+    source_width: int
+    source_height: int
     attempts: list[RecognitionAttempt] = field(default_factory=list, repr=False)
+
+
+def _looks_like_dense_code_outline(text: str) -> bool:
+    """Identify delimiter-dense outline rows without correcting their text."""
+
+    return (
+        len(text) >= 40
+        and text.count("|") >= 3
+        and ("::" in text or text.count("_") >= 2)
+    )
 
 
 def _failure(error_type: str, public_message: str, diagnostic_code: str) -> Failure:
@@ -502,6 +560,8 @@ class OcrEngine:
                     return Cancelled()
                 try:
                     crop = self._backend.perspective_crop(image, candidate.quad)
+                    source_width, source_height = self._backend.dimensions(crop)
+                    crop = self._backend.enhance_recognition_crop(crop)
                     crop_width, crop_height = self._backend.dimensions(crop)
                 except ValueError:
                     continue
@@ -513,12 +573,16 @@ class OcrEngine:
                         crop=crop,
                         width=crop_width,
                         height=crop_height,
+                        source_width=source_width,
+                        source_height=source_height,
                     )
                 )
             if not records:
                 return Empty()
 
             if not self._recognize_initial(records, cancel_event):
+                return Cancelled()
+            if not self._recognize_dense_code_retries(records, cancel_event):
                 return Cancelled()
             if not self._recognize_rotations(records, cancel_event):
                 return Cancelled()
@@ -674,6 +738,51 @@ class OcrEngine:
             if cancel_event is not None and cancel_event.is_set():
                 return False
         return True
+
+    def _recognize_dense_code_retries(
+        self, records: list[_CropRecord], cancel_event: Event | None
+    ) -> bool:
+        assert self._backend is not None
+        pending: list[tuple[_CropRecord, object]] = []
+
+        def flush() -> bool:
+            if not pending:
+                return True
+            if cancel_event is not None and cancel_event.is_set():
+                return False
+            attempts = self._predict_recognition([job[1] for job in pending])
+            if len(attempts) != len(pending):
+                raise _PredictorOutputError
+            for (record, _), (text, score) in zip(pending, attempts):
+                initial = record.attempts[0]
+                if (
+                    text
+                    and score
+                    >= initial.score - CODE_STRETCH_SCORE_TOLERANCE
+                ):
+                    record.attempts[0] = RecognitionAttempt(text, score, 0)
+            pending.clear()
+            return cancel_event is None or not cancel_event.is_set()
+
+        for record in records:
+            initial = record.attempts[0]
+            if (
+                record.source_height >= SMALL_TEXT_CROP_HEIGHT
+                and record.source_height <= WIDE_TEXT_MAX_HEIGHT
+                and record.source_width / record.source_height
+                >= WIDE_TEXT_MIN_ASPECT_RATIO
+                and _looks_like_dense_code_outline(initial.text)
+            ):
+                assert record.crop is not None
+                pending.append(
+                    (record, self._backend.stretch_recognition_crop(record.crop))
+                )
+                if len(pending) == RECOGNITION_BATCH_SIZE and not flush():
+                    pending.clear()
+                    return False
+        completed = flush()
+        pending.clear()
+        return completed
 
     def _recognize_rotations(
         self, records: list[_CropRecord], cancel_event: Event | None

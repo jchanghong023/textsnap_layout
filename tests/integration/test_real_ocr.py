@@ -24,6 +24,12 @@ from textsnap.tiling import generate_tiles
 FIXTURE_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "html"
 MANIFEST_PATH = FIXTURE_ROOT / "corpus-manifest.json"
 CHARACTER_ERROR_RATE_LIMIT = 0.02
+SMALL_CODE_PROBE = (
+    "@0|__init__.py|TARGET_AST_UNAVAILABLE;"
+    "M1|__init__.py::module|UNAVAILABLE|;"
+    "@0|__main__.py|TARGET_AST_UNAVAILABLE;"
+    "M1|__mai"
+)
 
 
 def _snapshot(root: Path) -> tuple[tuple[str, str, int, int], ...]:
@@ -232,6 +238,32 @@ def _render_corpus(
     )
 
 
+def _render_small_code_probe(*, font_file: Path) -> Any:
+    if not offline_guard_active():
+        raise RuntimeError("small-code rendering requires OfflineGuard")
+    import numpy
+    from PIL import Image, ImageDraw, ImageFont
+
+    font = ImageFont.truetype(
+        str(font_file),
+        12,
+        layout_engine=ImageFont.Layout.BASIC,
+    )
+    bounds = font.getbbox(SMALL_CODE_PROBE)
+    width = bounds[2] - bounds[0]
+    height = bounds[3] - bounds[1]
+    image = Image.new("RGB", (width + 4, height + 4), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    draw.text(
+        (2 - bounds[0], 2 - bounds[1]),
+        SMALL_CODE_PROBE,
+        font=font,
+        fill=(17, 17, 17),
+    )
+    rgb = numpy.asarray(image, dtype=numpy.uint8)
+    return numpy.ascontiguousarray(rgb[:, :, ::-1])
+
+
 class _GuardedImportProbeComplete(Exception):
     pass
 
@@ -435,6 +467,14 @@ class RealOcrRegressionTests(unittest.TestCase):
                     f"{case_id}: line anchor must occur exactly once",
                 )
 
+        for anchor in rendering["recognition_anchors"]:
+            with self.subTest(case=case_id, recognition_anchor=anchor):
+                self.assertEqual(
+                    actual.count(anchor),
+                    1,
+                    f"{case_id}: recognition anchor must occur exactly once",
+                )
+
         for anchor in rendering["geometry_anchors"]:
             with self.subTest(case=case_id, geometry_anchor=anchor):
                 expected_row, expected_column = _anchor_position(expected, anchor)
@@ -515,6 +555,7 @@ class RealOcrRegressionTests(unittest.TestCase):
                 (cache / relative).mkdir(parents=True)
             before_cache = _snapshot(cache)
             outcome_records: dict[str, dict[str, object]] = {}
+            small_code_record: dict[str, object] = {}
             self.assertNotIn(
                 "numpy",
                 sys.modules,
@@ -595,6 +636,50 @@ class RealOcrRegressionTests(unittest.TestCase):
                 try:
                     initialization_failure = engine.initialize()
                     self.assertIsNone(initialization_failure)
+                    small_code_original = _render_small_code_probe(
+                        font_file=font_file
+                    )
+                    assert engine._backend is not None
+                    small_code_enhanced = (
+                        engine._backend.enhance_recognition_crop(
+                            small_code_original
+                        )
+                    )
+                    self.assertGreater(
+                        small_code_enhanced.shape[0],
+                        small_code_original.shape[0],
+                    )
+                    original_attempt, enhanced_attempt = (
+                        engine._predict_recognition(
+                            [small_code_original, small_code_enhanced]
+                        )
+                    )
+                    original_distance = _levenshtein_distance(
+                        SMALL_CODE_PROBE,
+                        original_attempt[0],
+                    )
+                    enhanced_distance = _levenshtein_distance(
+                        SMALL_CODE_PROBE,
+                        enhanced_attempt[0],
+                    )
+                    if sys.platform == "win32" and platform.machine() == "AMD64":
+                        self.assertLess(
+                            enhanced_distance,
+                            original_distance,
+                            "small-code enhancement must improve the locked "
+                            "Windows x64 OCR result",
+                        )
+                    self.assertLessEqual(
+                        enhanced_distance / len(SMALL_CODE_PROBE),
+                        CHARACTER_ERROR_RATE_LIMIT,
+                    )
+                    small_code_record = {
+                        "characters": len(SMALL_CODE_PROBE),
+                        "original_distance": original_distance,
+                        "enhanced_distance": enhanced_distance,
+                        "original_height": int(small_code_original.shape[0]),
+                        "enhanced_height": int(small_code_enhanced.shape[0]),
+                    }
                     for rendered in rendered_cases:
                         outcome = engine.recognize(rendered.image_bgr)
                         self.assertIsInstance(outcome, Success)
@@ -654,6 +739,7 @@ class RealOcrRegressionTests(unittest.TestCase):
                 "engine_config": dict(engine.engine_config),
                 "renders": render_records,
                 "outcomes": outcome_records,
+                "small_code_probe": small_code_record,
             }
             print(
                 "TEXTSNAP_REAL_OCR_RECORD="

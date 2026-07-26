@@ -96,6 +96,10 @@
       "INVERSE-TEXT",
       "4K-SMALL-TEXT"
     ],
+    "recognition_anchors": [
+      "@0|__init__.py::module|UNAVAILABLE|;",
+      "paddle_adapter.py"
+    ],
     "seam_anchors": [
       "LONG-LINE |",
       "END-LONG-LINE",
