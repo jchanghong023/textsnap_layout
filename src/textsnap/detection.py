@@ -123,13 +123,6 @@ def _is_seam_pair(
     left_tile_candidate, right_tile_candidate = sorted(
         (first, second), key=lambda candidate: candidate.source_tile.x
     )
-    if not _touches_right_edge(left_tile_candidate, edge_tolerance):
-        return False
-    if not _touches_left_edge(right_tile_candidate, edge_tolerance):
-        return False
-    if vertical_overlap_ratio(first.quad, second.quad) < vertical_overlap_threshold:
-        return False
-
     _, first_height = quad_dimensions(first.quad)
     _, second_height = quad_dimensions(second.quad)
     larger_height = max(first_height, second_height)
@@ -137,6 +130,18 @@ def _is_seam_pair(
         larger_height <= 0
         or min(first_height, second_height) / larger_height < height_similarity
     ):
+        return False
+    # DB can omit a partially clipped edge glyph, leaving the detected box
+    # roughly half a glyph inside an overlapping tile. A fixed four-pixel
+    # tolerance then fails to reconnect the two pieces. Bound the scale-aware
+    # allowance to half the observed text height so it remains local to the
+    # seam and does not bridge ordinary column gaps.
+    effective_edge_tolerance = max(edge_tolerance, larger_height * 0.5)
+    if not _touches_right_edge(left_tile_candidate, effective_edge_tolerance):
+        return False
+    if not _touches_left_edge(right_tile_candidate, effective_edge_tolerance):
+        return False
+    if vertical_overlap_ratio(first.quad, second.quad) < vertical_overlap_threshold:
         return False
 
     left_bounds = quad_bounds(left_tile_candidate.quad)
@@ -160,9 +165,12 @@ def _merge_component(
         quad=bounding_quad(candidate.quad for candidate in candidates),
         detection_score=max(candidate.detection_score for candidate in candidates),
         source_tile=source,
-        internal_edge_distance=max(
-            candidate.internal_edge_distance for candidate in candidates
-        ),
+        # The merged box has been reconstructed across every internal seam in
+        # this component, so no single source tile's edge distance describes
+        # its reliability. Treat it like a complete outer-tile detection;
+        # otherwise a short interior fragment can replace the reconstructed
+        # long line during the following overlap de-duplication pass.
+        internal_edge_distance=float("inf"),
         touches_internal_edge=False,
         source_tile_indices=tuple(
             index

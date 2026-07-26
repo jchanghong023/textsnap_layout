@@ -263,7 +263,10 @@ class _OpenCvImageBackend:
                 int(round(width * WIDE_TEXT_HORIZONTAL_SCALE_FACTOR)),
                 height,
             ),
-            interpolation=self._cv2.INTER_CUBIC,
+            # Lanczos preserves narrow punctuation and separates adjacent
+            # underscore strokes better than cubic interpolation in the
+            # locked PP-OCRv6 small recognizer.
+            interpolation=self._cv2.INTER_LANCZOS4,
         )
         return self._numpy.ascontiguousarray(stretched)
 
@@ -759,6 +762,13 @@ class OcrEngine:
                     text
                     and score
                     >= initial.score - CODE_STRETCH_SCORE_TOLERANCE
+                    and (
+                        len(text) > len(initial.text)
+                        or (
+                            len(text) == len(initial.text)
+                            and score > initial.score
+                        )
+                    )
                 ):
                     record.attempts[0] = RecognitionAttempt(text, score, 0)
             pending.clear()

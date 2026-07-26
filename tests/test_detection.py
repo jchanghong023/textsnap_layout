@@ -176,6 +176,57 @@ class DetectionTests(unittest.TestCase):
         self.assertEqual(consolidated[0].quad, _quad(1016, 100, 1300, 120))
         self.assertEqual(consolidated[0].source_tile_indices, (0, 1))
 
+    def test_interior_fragment_does_not_replace_reconstructed_seam_line(self) -> None:
+        left = _candidate(
+            _quad(20, 100, 1214, 120),
+            score=0.88,
+            tile=self.tile0,
+            distance=2,
+            touching=True,
+        )
+        middle = _candidate(
+            _quad(1089, 100, 2302, 120),
+            score=0.91,
+            tile=self.tile1,
+            distance=1,
+            touching=True,
+        )
+        short_interior = _candidate(
+            _quad(2184, 100, 2368, 120),
+            score=0.89,
+            tile=self.tile2,
+            distance=8,
+            touching=False,
+        )
+
+        consolidated = consolidate_candidates((left, middle, short_interior))
+
+        self.assertEqual(len(consolidated), 1)
+        self.assertEqual(consolidated[0].quad, _quad(20, 100, 2368, 120))
+        self.assertEqual(consolidated[0].source_tile_indices, (0, 1, 2))
+
+    def test_seam_fragment_can_start_half_text_height_inside_tile(self) -> None:
+        left = _candidate(
+            _quad(20, 100, 1214, 134),
+            score=0.86,
+            tile=self.tile0,
+            distance=2,
+            touching=True,
+        )
+        right = _candidate(
+            _quad(1105, 101, 2303, 135),
+            score=0.85,
+            tile=self.tile1,
+            distance=1,
+            touching=True,
+        )
+
+        consolidated = consolidate_candidates((left, right))
+
+        self.assertEqual(len(consolidated), 1)
+        self.assertEqual(consolidated[0].quad, _quad(20, 100, 2303, 135))
+        self.assertEqual(consolidated[0].source_tile_indices, (0, 1))
+
     def test_different_rows_do_not_merge_at_seam(self) -> None:
         first = _candidate(
             _quad(1000, 10, 1216, 30),

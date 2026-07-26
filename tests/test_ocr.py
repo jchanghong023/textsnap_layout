@@ -474,6 +474,43 @@ class OcrEngineTests(unittest.TestCase):
         self.assertEqual(len(backend.stretched_crops), 1)
         self.assertEqual(len(factory.recognizer.calls[1:]), 2)
 
+    def test_dense_code_retry_does_not_replace_a_longer_initial_result(self) -> None:
+        box = _quad(0, 0, 500, 20)
+        initial_text = (
+            "@0|entry.py::module|UNAVAILABLE|;"
+            "M1|entry.py::module|UNAVAILABLE|"
+        )
+        shorter_retry = initial_text.removesuffix("|")
+
+        def detector(image, batch_size):
+            if image.tag == "warmup":
+                return [{}]
+            return [{"dt_polys": [box], "dt_scores": [0.9]}]
+
+        def recognizer(images, batch_size):
+            if images and images[0].tag == "warmup":
+                return [{}]
+            return [
+                {
+                    "rec_text": (
+                        shorter_retry
+                        if image.tag[0] == "stretched"
+                        else initial_text
+                    ),
+                    "rec_score": 0.995 if image.tag[0] == "stretched" else 0.99,
+                }
+                for image in images
+            ]
+
+        engine, _, backend = self._engine(detector, recognizer)
+        self.assertIsNone(engine.initialize())
+
+        outcome = engine.recognize(ControlledNdarray(40, 500))
+
+        self.assertIsInstance(outcome, Success)
+        self.assertEqual(outcome.result.text, initial_text)
+        self.assertEqual(len(backend.stretched_crops), 1)
+
     def test_only_exact_empty_string_is_dropped_before_blank_layout(self) -> None:
         boxes = [_quad(0, 0, 20, 20), _quad(40, 0, 60, 20)]
 
