@@ -149,22 +149,26 @@ def _is_seam_pair(
     return horizontal_gap <= tile_overlap + larger_height * 2.0
 
 
-def _merge_pair(
-    first: DetectionCandidate, second: DetectionCandidate
+def _merge_component(
+    candidates: list[DetectionCandidate],
 ) -> DetectionCandidate:
     source = max(
-        (first.source_tile, second.source_tile),
+        (candidate.source_tile for candidate in candidates),
         key=lambda tile: (tile.x, tile.y, tile.index),
     )
     return DetectionCandidate(
-        quad=bounding_quad((first.quad, second.quad)),
-        detection_score=max(first.detection_score, second.detection_score),
+        quad=bounding_quad(candidate.quad for candidate in candidates),
+        detection_score=max(candidate.detection_score for candidate in candidates),
         source_tile=source,
         internal_edge_distance=max(
-            first.internal_edge_distance, second.internal_edge_distance
+            candidate.internal_edge_distance for candidate in candidates
         ),
         touches_internal_edge=False,
-        source_tile_indices=(first.source_tile_indices + second.source_tile_indices),
+        source_tile_indices=tuple(
+            index
+            for candidate in candidates
+            for index in candidate.source_tile_indices
+        ),
     )
 
 
@@ -184,34 +188,30 @@ def merge_seam_fragments(
     if edge_tolerance < 0:
         raise ValueError("edge_tolerance must be non-negative")
 
-    items = list(candidates)
-    changed = True
-    while changed:
-        changed = False
-        for first_index, first in enumerate(items):
-            for second_index in range(first_index + 1, len(items)):
-                second = items[second_index]
-                if _is_seam_pair(
-                    first,
-                    second,
-                    vertical_overlap_threshold=vertical_overlap_threshold,
-                    height_similarity=height_similarity,
-                    edge_tolerance=edge_tolerance,
-                ):
-                    merged = _merge_pair(first, second)
-                    items = [
-                        item
-                        for index, item in enumerate(items)
-                        if index not in (first_index, second_index)
-                    ]
-                    items.append(merged)
-                    changed = True
-                    break
-            if changed:
-                break
+    items = tuple(candidates)
+    groups = _DisjointSet(len(items))
+    for first_index, first in enumerate(items):
+        for second_index in range(first_index + 1, len(items)):
+            second = items[second_index]
+            if _is_seam_pair(
+                first,
+                second,
+                vertical_overlap_threshold=vertical_overlap_threshold,
+                height_similarity=height_similarity,
+                edge_tolerance=edge_tolerance,
+            ):
+                groups.union(first_index, second_index)
+
+    components: dict[int, list[DetectionCandidate]] = {}
+    for index, candidate in enumerate(items):
+        components.setdefault(groups.find(index), []).append(candidate)
+    merged = [
+        component[0] if len(component) == 1 else _merge_component(component)
+        for component in components.values()
+    ]
     return tuple(
         sorted(
-            items,
+            merged,
             key=lambda candidate: (
                 quad_bounds(candidate.quad)[1],
                 quad_bounds(candidate.quad)[0],

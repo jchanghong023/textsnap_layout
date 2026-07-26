@@ -1,24 +1,68 @@
 from __future__ import annotations
 
 import builtins
+from contextlib import ExitStack, contextmanager
 import hashlib
+import importlib.util
+import io
+import os
 from pathlib import Path
 import tempfile
 from threading import Event
 import unittest
 from unittest.mock import patch
 
-from textsnap.domain import Cancelled, Failure, Success
+from textsnap.domain import Cancelled, Empty, Failure, Success
+from textsnap.layout import build_layout
 from textsnap.ocr import (
     DETECTION_MODEL_NAME,
     RECOGNITION_MODEL_NAME,
     LocalModelSpec,
     OcrEngine,
+    _OpenCvImageBackend,
 )
+from textsnap.orientation import best_attempt
 
 
 def _quad(left: float, top: float, right: float, bottom: float):
     return ((left, top), (right, top), (right, bottom), (left, bottom))
+
+
+def _reject_python_file_write(*args, **kwargs):
+    raise AssertionError("unexpected Python file write")
+
+
+@contextmanager
+def _deny_python_file_writes():
+    entrypoints = [
+        (builtins, "open"),
+        (io, "open"),
+        (os, "open"),
+        (os, "fdopen"),
+        (os, "write"),
+    ]
+    entrypoints.extend(
+        (os, name) for name in ("pwrite", "writev") if hasattr(os, name)
+    )
+    with ExitStack() as stack:
+        for owner, name in entrypoints:
+            stack.enter_context(
+                patch.object(owner, name, side_effect=_reject_python_file_write)
+            )
+        yield
+
+
+class StagedCancelEvent:
+    def __init__(self, armed: Event, cancel_on_armed_check: int) -> None:
+        self._armed = armed
+        self._cancel_on_armed_check = cancel_on_armed_check
+        self.armed_checks = 0
+
+    def is_set(self) -> bool:
+        if not self._armed.is_set():
+            return False
+        self.armed_checks += 1
+        return self.armed_checks >= self._cancel_on_armed_check
 
 
 class ControlledNdarray:
@@ -205,6 +249,52 @@ class OcrEngineTests(unittest.TestCase):
         self.assertTrue(factory.detector.closed)
         self.assertTrue(factory.recognizer.closed)
 
+    @unittest.skipUnless(os.name == "nt", "Windows model path behavior")
+    def test_unicode_model_root_uses_ascii_relative_predictor_paths(self) -> None:
+        model_root = Path(self.temporary_directory.name) / "中文 path" / "models"
+        model_root.mkdir(parents=True)
+        detection = self._make_model(model_root / DETECTION_MODEL_NAME, DETECTION_MODEL_NAME)
+        recognition = self._make_model(
+            model_root / RECOGNITION_MODEL_NAME,
+            RECOGNITION_MODEL_NAME,
+        )
+
+        class RecordingFactory(FakeFactory):
+            def __init__(self) -> None:
+                super().__init__(_default_detector, _default_recognizer)
+                self.working_directories: list[Path] = []
+
+            def create_detector(self, **kwargs):
+                self.working_directories.append(Path.cwd())
+                return super().create_detector(**kwargs)
+
+            def create_recognizer(self, **kwargs):
+                self.working_directories.append(Path.cwd())
+                return super().create_recognizer(**kwargs)
+
+        factory = RecordingFactory()
+        engine = OcrEngine(
+            detection,
+            recognition,
+            predictor_factory=factory,
+            image_backend=FakeImageBackend(),
+        )
+        self.addCleanup(engine.close)
+        original_working_directory = Path.cwd()
+
+        self.assertIsNone(engine.initialize())
+
+        self.assertEqual(factory.working_directories, [model_root.resolve()] * 2)
+        self.assertEqual(
+            factory.detector_kwargs["model_dir"],
+            DETECTION_MODEL_NAME,
+        )
+        self.assertEqual(
+            factory.recognizer_kwargs["model_dir"],
+            RECOGNITION_MODEL_NAME,
+        )
+        self.assertEqual(Path.cwd(), original_working_directory)
+
     def test_explicit_arm_integration_override_has_no_silent_fallback(self) -> None:
         engine, factory, _ = self._engine(
             engine_config={"run_mode": "paddle", "cpu_threads": 1}
@@ -322,7 +412,7 @@ class OcrEngineTests(unittest.TestCase):
         }
         self.assertEqual(rotations, {90, 180, 270})
 
-    def test_only_exact_empty_string_is_dropped(self) -> None:
+    def test_only_exact_empty_string_is_dropped_before_blank_layout(self) -> None:
         boxes = [_quad(0, 0, 20, 20), _quad(40, 0, 60, 20)]
 
         def detector(image, batch_size):
@@ -340,9 +430,33 @@ class OcrEngineTests(unittest.TestCase):
 
         engine, _, _ = self._engine(detector, recognizer)
         self.assertIsNone(engine.initialize())
+        captured_texts = []
+
+        def capture_layout(spans):
+            captured_texts.extend(span.text for span in spans)
+            return build_layout(spans)
+
+        with patch("textsnap.ocr.build_layout", side_effect=capture_layout):
+            outcome = engine.recognize(ControlledNdarray(40, 100))
+        self.assertIsInstance(outcome, Empty)
+        self.assertEqual(captured_texts, [" "])
+
+    def test_visible_text_keeps_internal_whitespace(self) -> None:
+        def detector(image, batch_size):
+            if image.tag == "warmup":
+                return [{}]
+            return [{"dt_polys": [_quad(0, 0, 80, 20)], "dt_scores": [0.9]}]
+
+        def recognizer(images, batch_size):
+            if images and images[0].tag == "warmup":
+                return [{}]
+            return [{"rec_text": "left  right", "rec_score": 0.9}]
+
+        engine, _, _ = self._engine(detector, recognizer)
+        self.assertIsNone(engine.initialize())
         outcome = engine.recognize(ControlledNdarray(40, 100))
         self.assertIsInstance(outcome, Success)
-        self.assertEqual(outcome.result.stats.output_spans, 1)
+        self.assertEqual(outcome.result.text, "left  right")
 
     def test_cancellation_is_observed_after_uninterruptible_tile_call(self) -> None:
         cancel_event = Event()
@@ -384,6 +498,75 @@ class OcrEngineTests(unittest.TestCase):
         self.assertEqual(len(runtime_calls[0][0]), 8)
         self.assertEqual(runtime_calls[0][1], 8)
 
+    def test_cancellation_is_observed_before_empty_rotation_flush(self) -> None:
+        armed = Event()
+        cancel_event = StagedCancelEvent(armed, cancel_on_armed_check=2)
+
+        def detector(image, batch_size):
+            if image.tag == "warmup":
+                return [{}]
+            return [{"dt_polys": [_quad(0, 0, 20, 20)], "dt_scores": [0.9]}]
+
+        def recognizer(images, batch_size):
+            if images and images[0].tag == "warmup":
+                return [{}]
+            armed.set()
+            return [{"rec_text": "text", "rec_score": 0.9}]
+
+        engine, _, _ = self._engine(detector, recognizer)
+        self.assertIsNone(engine.initialize())
+        with patch("textsnap.ocr.build_layout") as layout_builder:
+            outcome = engine.recognize(ControlledNdarray(40, 100), cancel_event)
+        self.assertIsInstance(outcome, Cancelled)
+        self.assertEqual(cancel_event.armed_checks, 2)
+        layout_builder.assert_not_called()
+
+    def test_cancellation_is_observed_before_success_is_returned(self) -> None:
+        armed = Event()
+        cancel_event = StagedCancelEvent(armed, cancel_on_armed_check=3)
+
+        def detector(image, batch_size):
+            if image.tag == "warmup":
+                return [{}]
+            return [{"dt_polys": [_quad(0, 0, 20, 20)], "dt_scores": [0.9]}]
+
+        def recognizer(images, batch_size):
+            if images and images[0].tag == "warmup":
+                return [{}]
+            armed.set()
+            return [{"rec_text": "text", "rec_score": 0.9}]
+
+        engine, _, _ = self._engine(detector, recognizer)
+        self.assertIsNone(engine.initialize())
+        with patch("textsnap.ocr.build_layout", wraps=build_layout) as layout_builder:
+            outcome = engine.recognize(ControlledNdarray(40, 100), cancel_event)
+        self.assertIsInstance(outcome, Cancelled)
+        self.assertEqual(cancel_event.armed_checks, 3)
+        layout_builder.assert_called_once()
+
+    def test_cancellation_during_final_empty_span_scan_wins_over_empty(self) -> None:
+        cancel_event = Event()
+
+        def detector(image, batch_size):
+            if image.tag == "warmup":
+                return [{}]
+            return [{"dt_polys": [_quad(0, 0, 20, 20)], "dt_scores": [0.9]}]
+
+        def recognizer(images, batch_size):
+            if images and images[0].tag == "warmup":
+                return [{}]
+            return [{"rec_text": "", "rec_score": 0.9}]
+
+        def cancel_then_select(attempts):
+            cancel_event.set()
+            return best_attempt(attempts)
+
+        engine, _, _ = self._engine(detector, recognizer)
+        self.assertIsNone(engine.initialize())
+        with patch("textsnap.ocr.best_attempt", side_effect=cancel_then_select):
+            outcome = engine.recognize(ControlledNdarray(40, 100), cancel_event)
+        self.assertIsInstance(outcome, Cancelled)
+
     def test_predictor_exception_cannot_leak_path_or_ocr_text(self) -> None:
         def detector(image, batch_size):
             if image.tag == "warmup":
@@ -407,12 +590,91 @@ class OcrEngineTests(unittest.TestCase):
         engine, _, _ = self._engine()
         self.assertIsNone(engine.initialize())
 
-        def reject_write(*args, **kwargs):
-            raise AssertionError("unexpected file access")
-
-        with patch.object(builtins, "open", reject_write):
+        with _deny_python_file_writes():
             outcome = engine.recognize(ControlledNdarray(40, 100))
         self.assertNotIsInstance(outcome, Failure)
+
+    def test_file_write_guard_catches_pathlib_tempfile_and_os_writes(self) -> None:
+        root = Path(self.temporary_directory.name)
+        path_target = root / "pathlib-write.txt"
+        tempfile_target_prefix = "tempfile-write-"
+        os_target = root / "os-write.bin"
+
+        with self.subTest(entrypoint="pathlib"):
+            with self.assertRaisesRegex(AssertionError, "unexpected Python file write"):
+                with _deny_python_file_writes():
+                    path_target.write_text("blocked", encoding="utf-8")
+        with self.subTest(entrypoint="tempfile"):
+            with self.assertRaisesRegex(AssertionError, "unexpected Python file write"):
+                with _deny_python_file_writes():
+                    tempfile.NamedTemporaryFile(
+                        dir=root,
+                        prefix=tempfile_target_prefix,
+                    )
+        with self.subTest(entrypoint="os"):
+            with self.assertRaisesRegex(AssertionError, "unexpected Python file write"):
+                with _deny_python_file_writes():
+                    os.open(os_target, os.O_CREAT | os.O_WRONLY)
+
+        self.assertFalse(path_target.exists())
+        self.assertFalse(any(root.glob(f"{tempfile_target_prefix}*")))
+        self.assertFalse(os_target.exists())
+
+
+class OpenCvImageBackendTests(unittest.TestCase):
+    def setUp(self) -> None:
+        missing = [
+            module_name
+            for module_name in ("numpy", "cv2")
+            if importlib.util.find_spec(module_name) is None
+        ]
+        if missing:
+            self.skipTest(f"{', '.join(missing)} required")
+
+    def test_perspective_crop_preserves_convex_ring_order_for_diamond(self) -> None:
+        import numpy
+
+        backend = _OpenCvImageBackend()
+        image = numpy.arange(12 * 12 * 3, dtype=numpy.uint8).reshape((12, 12, 3))
+        quad = ((5.0, 0.0), (10.0, 5.0), (5.0, 10.0), (0.0, 5.0))
+        sources = []
+        real_get_transform = backend._cv2.getPerspectiveTransform
+
+        def capture_source(source, destination):
+            sources.append(source.copy())
+            return real_get_transform(source, destination)
+
+        with patch.object(
+            backend._cv2,
+            "getPerspectiveTransform",
+            side_effect=capture_source,
+        ):
+            crop = backend.perspective_crop(image, quad)
+
+        self.assertEqual(crop.shape, (7, 7, 3))
+        self.assertEqual(len(sources), 1)
+        numpy.testing.assert_array_equal(
+            sources[0],
+            numpy.asarray(quad, dtype=numpy.float32),
+        )
+
+    def test_perspective_crop_rejects_non_convex_and_degenerate_quads(self) -> None:
+        import numpy
+
+        backend = _OpenCvImageBackend()
+        image = numpy.zeros((12, 12, 3), dtype=numpy.uint8)
+        invalid_quads = (
+            ((1.0, 1.0), (10.0, 1.0), (10.0, 10.0), (10.0, 10.0)),
+            ((1.0, 1.0), (10.0, 1.0), (5.0, 5.0), (1.0, 10.0)),
+            ((1.0, 1.0), (5.0, 1.0), (10.0, 1.0), (1.0, 10.0)),
+            ((1.0, 1.0), (10.0, 10.0), (1.0, 10.0), (10.0, 1.0)),
+            ((1.0, 1.0), (1.6, 1.0), (1.6, 10.0), (1.0, 10.0)),
+        )
+
+        for quad in invalid_quads:
+            with self.subTest(quad=quad):
+                with self.assertRaises(ValueError):
+                    backend.perspective_crop(image, quad)
 
 
 if __name__ == "__main__":

@@ -57,6 +57,11 @@ class TrayUi(QSystemTrayIcon):
         finally:
             self.autostart_action.blockSignals(old_blocked)
 
+    def hide_context_menu(self) -> None:
+        """Synchronously dismiss the application-owned popup before capture."""
+
+        self.menu.hide()
+
     def show_startup_notification(
         self,
         hotkey_text: str = "Ctrl+Alt+O",

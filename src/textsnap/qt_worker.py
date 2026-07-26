@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from threading import Event
+from time import monotonic_ns
 from typing import Protocol
 
 from PySide6.QtCore import QObject, QThread, Qt, Signal, Slot
@@ -18,6 +19,7 @@ from .domain import (
     TaskOutcome,
     TaskState,
 )
+from .runtime_diagnostics import record_runtime_event
 
 
 _OUTCOME_TYPES = (Success, Empty, Cancelled, Failure)
@@ -46,6 +48,14 @@ class OcrTask:
             raise ValueError("task_id must be positive")
 
 
+@dataclass(slots=True)
+class _ShutdownStatus:
+    """Plain-Python handoff readable after the GUI event loop has stopped."""
+
+    completed: Event = field(default_factory=Event)
+    failure: Failure | None = None
+
+
 def _failure(error_type: str, public_message: str, diagnostic_code: str) -> Failure:
     return Failure(
         error_type=error_type,
@@ -63,9 +73,14 @@ class _OcrWorker(QObject):
     task_rejected = Signal(int, object)
     close_completed = Signal(object)
 
-    def __init__(self, engine_factory: Callable[[], OcrEngineProtocol]) -> None:
+    def __init__(
+        self,
+        engine_factory: Callable[[], OcrEngineProtocol],
+        shutdown_status: _ShutdownStatus,
+    ) -> None:
         super().__init__()
         self._engine_factory = engine_factory
+        self._shutdown_status = shutdown_status
         self._engine: OcrEngineProtocol | None = None
         self._model_state = ModelState.LOADING
         self._busy = False
@@ -87,8 +102,13 @@ class _OcrWorker(QObject):
             return
         self._model_state = ModelState.LOADING
         self.model_state_changed.emit(ModelState.LOADING)
+        record_runtime_event("ocr.model-retry")
         close_failure = self._close_engine()
         if close_failure is not None:
+            record_runtime_event(
+                "ocr.model-retry-close-failed",
+                diagnostic_code=close_failure.diagnostic_code,
+            )
             self._model_state = ModelState.ERROR
             self.model_state_changed.emit(ModelState.ERROR)
             self.model_failed.emit(close_failure)
@@ -96,6 +116,11 @@ class _OcrWorker(QObject):
         self._initialize_engine(emit_loading=False)
 
     def _initialize_engine(self, *, emit_loading: bool = True) -> None:
+        started_ns = monotonic_ns()
+        record_runtime_event(
+            "ocr.model-load-start",
+            retry=not emit_loading,
+        )
         self._model_state = ModelState.LOADING
         if emit_loading:
             self.model_state_changed.emit(ModelState.LOADING)
@@ -108,7 +133,11 @@ class _OcrWorker(QObject):
                     "The OCR worker could not initialize the model.",
                     "ocr-worker-initialize-contract",
                 )
-        except Exception:
+        except Exception as exc:
+            record_runtime_event(
+                "ocr.model-load-exception",
+                exception_type=type(exc).__name__,
+            )
             result = _failure(
                 "OcrWorkerInitializationError",
                 "The OCR worker could not initialize the model.",
@@ -116,12 +145,21 @@ class _OcrWorker(QObject):
             )
 
         if isinstance(result, Failure):
+            record_runtime_event(
+                "ocr.model-load-failed",
+                diagnostic_code=result.diagnostic_code,
+                duration_ms=(monotonic_ns() - started_ns) / 1_000_000,
+            )
             self._model_state = ModelState.ERROR
             self.model_state_changed.emit(ModelState.ERROR)
             self.model_failed.emit(result)
             return
 
         self._model_state = ModelState.READY
+        record_runtime_event(
+            "ocr.model-ready",
+            duration_ms=(monotonic_ns() - started_ns) / 1_000_000,
+        )
         self.model_state_changed.emit(ModelState.READY)
 
     def _close_engine(self) -> Failure | None:
@@ -148,6 +186,7 @@ class _OcrWorker(QObject):
     @Slot(object)
     def run_task(self, task: object) -> None:
         if not isinstance(task, OcrTask):
+            record_runtime_event("ocr.task-rejected", reason="invalid")
             self.task_rejected.emit(
                 0,
                 _failure(
@@ -158,6 +197,11 @@ class _OcrWorker(QObject):
             )
             return
         if self._shutting_down:
+            record_runtime_event(
+                "ocr.task-rejected",
+                reason="shutdown",
+                task_id=task.task_id,
+            )
             self.task_rejected.emit(
                 task.task_id,
                 _failure(
@@ -168,6 +212,11 @@ class _OcrWorker(QObject):
             )
             return
         if self._busy:
+            record_runtime_event(
+                "ocr.task-rejected",
+                reason="busy",
+                task_id=task.task_id,
+            )
             self.task_rejected.emit(
                 task.task_id,
                 _failure(
@@ -178,6 +227,11 @@ class _OcrWorker(QObject):
             )
             return
         if self._model_state is not ModelState.READY or self._engine is None:
+            record_runtime_event(
+                "ocr.task-rejected",
+                reason="model-not-ready",
+                task_id=task.task_id,
+            )
             self.task_rejected.emit(
                 task.task_id,
                 _failure(
@@ -189,6 +243,8 @@ class _OcrWorker(QObject):
             return
 
         self._busy = True
+        started_ns = monotonic_ns()
+        record_runtime_event("ocr.task-start", task_id=task.task_id)
         try:
             outcome = self._engine.recognize(task.image_bgr, task.cancel_event)
             if not isinstance(outcome, _OUTCOME_TYPES):
@@ -197,7 +253,12 @@ class _OcrWorker(QObject):
                     "Text recognition failed.",
                     "ocr-worker-outcome-contract",
                 )
-        except Exception:
+        except Exception as exc:
+            record_runtime_event(
+                "ocr.task-exception",
+                exception_type=type(exc).__name__,
+                task_id=task.task_id,
+            )
             outcome = _failure(
                 "OcrWorkerInferenceError",
                 "Text recognition failed.",
@@ -205,6 +266,12 @@ class _OcrWorker(QObject):
             )
         finally:
             self._busy = False
+        record_runtime_event(
+            "ocr.task-complete",
+            duration_ms=(monotonic_ns() - started_ns) / 1_000_000,
+            outcome_type=type(outcome).__name__,
+            task_id=task.task_id,
+        )
         self.task_completed.emit(task.task_id, outcome)
 
     @Slot()
@@ -212,8 +279,16 @@ class _OcrWorker(QObject):
         if self._shutting_down:
             return
         self._shutting_down = True
+        record_runtime_event("ocr.shutdown-start")
 
         result = self._close_engine()
+        record_runtime_event(
+            "ocr.shutdown-complete",
+            diagnostic_code=(result.diagnostic_code if result is not None else None),
+            success=result is None,
+        )
+        self._shutdown_status.failure = result
+        self._shutdown_status.completed.set()
         self.close_completed.emit(result)
         # QCoreApplication may already be leaving its GUI event loop (for
         # example during a Windows session shutdown). Quit the worker loop from
@@ -250,7 +325,8 @@ class OcrThreadController(QObject):
         super().__init__(parent)
         self._thread = QThread(self)
         self._thread.setObjectName("textsnap-ocr-worker")
-        self._worker = _OcrWorker(engine_factory)
+        self._shutdown_status = _ShutdownStatus()
+        self._worker = _OcrWorker(engine_factory, self._shutdown_status)
         self._worker.moveToThread(self._thread)
 
         self._model_state = ModelState.LOADING
@@ -314,12 +390,19 @@ class OcrThreadController(QObject):
     def running(self) -> bool:
         return self._thread.isRunning()
 
+    @property
+    def shutdown_failure(self) -> Failure | None:
+        if not self._shutdown_status.completed.is_set():
+            return None
+        return self._shutdown_status.failure
+
     def start(self) -> None:
         if self._shutting_down:
             raise RuntimeError("cannot start an OCR worker during shutdown")
         if self._started:
             return
         self._started = True
+        record_runtime_event("ocr.thread-start")
         self._thread.start()
 
     def submit(self, image_bgr: object) -> OcrTask | None:
@@ -370,6 +453,7 @@ class OcrThreadController(QObject):
         if task is None:
             return False
         task.cancel_event.set()
+        record_runtime_event("ocr.task-cancel-requested", task_id=task.task_id)
         return True
 
     def retry_model(self) -> bool:
@@ -393,19 +477,34 @@ class OcrThreadController(QObject):
         if self._shutting_down:
             return
         self._shutting_down = True
+        record_runtime_event("ocr.thread-shutdown-requested")
         self.cancel_active()
         if not self._started:
+            self._shutdown_status.completed.set()
             self._shutdown_reported = True
             self.shutdown_finished.emit(None)
             return
         self._shutdown_requested.emit()
 
     def wait_for_shutdown(self) -> bool:
-        """Block until the worker has stopped without terminating it."""
+        """Block until shutdown and report both thread and engine-close failures."""
 
-        if not self._started or not self._thread.isRunning():
+        if not self._started:
+            self._release_stopped_task()
             return True
-        return bool(self._thread.wait())
+        if self._thread.isRunning() and not bool(self._thread.wait()):
+            return False
+        self._release_stopped_task()
+        return (
+            self._shutdown_status.completed.is_set()
+            and self._shutdown_status.failure is None
+        )
+
+    def _release_stopped_task(self) -> None:
+        """Drop image ownership once the worker thread can no longer use it."""
+
+        self._active_task = None
+        self._set_task_state(TaskState.IDLE)
 
     def _allocate_task_id(self) -> int:
         task_id = self._next_task_id
@@ -448,6 +547,8 @@ class OcrThreadController(QObject):
                 "ocr-worker-outcome-contract",
             )
         active = self._active_task
+        if active is None and self._shutting_down:
+            return
         if active is None or active.task_id != task_id:
             self.task_rejected.emit(
                 task_id,
@@ -491,5 +592,13 @@ class OcrThreadController(QObject):
     def _on_thread_finished(self) -> None:
         if self._shutdown_reported:
             return
+        if self._shutdown_status.completed.is_set():
+            self._close_result = self._shutdown_status.failure
+        elif self._close_result is None:
+            self._close_result = _failure(
+                "OcrWorkerShutdownError",
+                "The OCR worker did not shut down cleanly.",
+                "ocr-worker-stopped-without-close",
+            )
         self._shutdown_reported = True
         self.shutdown_finished.emit(self._close_result)

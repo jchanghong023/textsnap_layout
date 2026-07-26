@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import shutil
@@ -16,6 +17,7 @@ from textsnap.bootstrap import (
     run_application,
 )
 from textsnap.paths import BundlePaths
+from textsnap.runtime_diagnostics import DIAGNOSTIC_LOG_ENVIRONMENT
 from textsnap.settings import DEFAULT_SETTINGS, SettingsLoadResult
 
 
@@ -245,6 +247,42 @@ class BootstrapTests(unittest.TestCase):
 
         self.assertEqual(result, 2)
         self.assertEqual(messages, ["启动参数无效。"])
+
+    def test_explicit_external_diagnostic_log_records_startup_lifecycle(
+        self,
+    ) -> None:
+        log_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(log_directory.cleanup)
+        destination = Path(log_directory.name) / "runtime.jsonl"
+        events: list[object] = []
+
+        result = run_application(
+            self.paths,
+            (),
+            guard_factory=lambda **resources: _Guard(events, **resources),
+            mutex_factory=lambda: _Mutex(events, True),
+            dpi_enabler=lambda: None,
+            data_directory_writable=lambda path: True,
+            settings_loader=lambda path: self.loaded,
+            primary_runner=lambda *args: 0,
+            secondary_sender=lambda: self.fail("secondary sender called"),
+            fatal_notifier=lambda message: self.fail(message),
+            environment={DIAGNOSTIC_LOG_ENVIRONMENT: str(destination)},
+        )
+
+        self.assertEqual(result, 0)
+        documents = [
+            json.loads(line)
+            for line in destination.read_text(encoding="utf-8").splitlines()
+        ]
+        logged_events = [document["event"] for document in documents]
+        self.assertEqual(logged_events[0], "process.start")
+        self.assertIn("startup.mutex-acquired", logged_events)
+        self.assertIn("startup.offline-guard-ready", logged_events)
+        self.assertIn("startup.primary-runner-enter", logged_events)
+        self.assertIn("startup.primary-runner-exit", logged_events)
+        self.assertEqual(logged_events[-1], "process.exit")
+        self.assertEqual(documents[-1]["exit_code"], 0)
 
     def test_isolated_bootstrap_sets_no_bytecode_before_third_party_imports(
         self,

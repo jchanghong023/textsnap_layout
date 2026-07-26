@@ -11,18 +11,6 @@ from types import SimpleNamespace
 import unittest
 from unittest import mock
 
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-
-try:
-    from PySide6.QtCore import QRect
-    from PySide6.QtWidgets import QApplication
-except (ImportError, OSError) as exc:
-    _PYSIDE_AVAILABLE = False
-    _PYSIDE_SKIP_REASON = f"PySide6 runtime unavailable: {exc}"
-else:
-    _PYSIDE_AVAILABLE = importlib.util.find_spec("numpy") is not None
-    _PYSIDE_SKIP_REASON = "NumPy is unavailable" if not _PYSIDE_AVAILABLE else ""
-
 from textsnap.domain import (
     CaptureFrame,
     Failure,
@@ -35,7 +23,23 @@ from textsnap.domain import (
 from textsnap.paths import BundlePaths
 from textsnap.settings import Hotkey, Settings, SettingsIssue
 
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+_PYSIDE_AVAILABLE = importlib.util.find_spec("PySide6") is not None
+_NUMPY_AVAILABLE = importlib.util.find_spec("numpy") is not None
+_TEST_DEPENDENCIES_AVAILABLE = _PYSIDE_AVAILABLE and _NUMPY_AVAILABLE
+
 if _PYSIDE_AVAILABLE:
+    from PySide6.QtCore import QRect
+    from PySide6.QtWidgets import QApplication
+
+if not _PYSIDE_AVAILABLE:
+    _DEPENDENCY_SKIP_REASON = "PySide6 is not installed"
+elif not _NUMPY_AVAILABLE:
+    _DEPENDENCY_SKIP_REASON = "NumPy is not installed"
+else:
+    _DEPENDENCY_SKIP_REASON = ""
+if _TEST_DEPENDENCIES_AVAILABLE:
     from textsnap.controller import (
         APPLICATION_ICON_RELATIVE_PATH,
         ApplicationController,
@@ -66,9 +70,14 @@ class _Application:
         self.events = events
         self.quit_called = False
         self.filters: list[object] = []
+        self.process_events_callback = None
 
     def processEvents(self) -> None:  # noqa: N802
         self.events.append("process-events")
+        callback = self.process_events_callback
+        self.process_events_callback = None
+        if callable(callback):
+            callback()
 
     def installNativeEventFilter(self, event_filter: object) -> None:  # noqa: N802
         self.filters.append(event_filter)
@@ -109,6 +118,8 @@ class _Tray:
         self.autostart_checked = False
         self.notifications: list[tuple[str, bool]] = []
         self.messages: list[tuple[str, str]] = []
+        self.context_menu_visible = False
+        self.context_menu_hide_calls = 0
 
     def show(self) -> None:
         self.visible = True
@@ -120,6 +131,10 @@ class _Tray:
 
     def set_autostart_checked(self, checked: bool) -> None:
         self.autostart_checked = checked
+
+    def hide_context_menu(self) -> None:
+        self.context_menu_visible = False
+        self.context_menu_hide_calls += 1
 
     def show_startup_notification(
         self,
@@ -295,9 +310,13 @@ class _Autostart:
         self.enabled = False
         self.command: str | None = None
         self.fail_rollback = False
+        self.fail_set_count = 0
 
     def set_enabled(self, enabled: bool) -> None:
         self.events.append(("autostart", enabled))
+        if self.fail_set_count:
+            self.fail_set_count -= 1
+            raise RuntimeError("transient registry failure")
         if self.fail_rollback and not enabled:
             raise RuntimeError("private path must not escape")
         self.enabled = enabled
@@ -340,6 +359,8 @@ class _Worker:
         self.next_task_id = 1
         self.cancel_calls = 0
         self.retry_result = True
+        self.shutdown_failure: Failure | None = None
+        self.wait_result = True
 
     def start(self) -> None:
         self.events.append("worker-start")
@@ -359,6 +380,10 @@ class _Worker:
 
     def shutdown(self) -> None:
         self.events.append("worker-shutdown")
+
+    def wait_for_shutdown(self) -> bool:
+        self.events.append("worker-wait")
+        return self.wait_result
 
     def emit_model_state(self, state: ModelState) -> None:
         self.model_state = state
@@ -386,7 +411,7 @@ class _Harness:
     capture_calls: list[bool]
 
 
-@unittest.skipUnless(_PYSIDE_AVAILABLE, _PYSIDE_SKIP_REASON)
+@unittest.skipUnless(_TEST_DEPENDENCIES_AVAILABLE, _DEPENDENCY_SKIP_REASON)
 class ControllerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -467,6 +492,10 @@ class ControllerTests(unittest.TestCase):
             if writer is not None:
                 writer(path, value)
 
+        def notify(message: str) -> None:
+            notices.append(message)
+            events.append(("notice", message))
+
         controller = ApplicationController(
             application=application,
             paths=paths,
@@ -484,7 +513,7 @@ class ControllerTests(unittest.TestCase):
             overlay_factory=overlay_factory,
             capture_function=capture,
             settings_writer=settings_writer,
-            notifier=notices.append,
+            notifier=notify,
             native_event_filter_factory=None,
             shutdown_timer_factory=lambda parent: timer,
             force_exit_prompt=lambda: False,
@@ -563,6 +592,34 @@ class ControllerTests(unittest.TestCase):
         self.assertIsNone(harness.autostart.command)
         self.assertEqual(len(harness.writes), 1)
 
+    def test_failed_startup_autostart_sync_is_notified_after_tray_and_retried(
+        self,
+    ) -> None:
+        harness = self._harness()
+        harness.autostart.fail_set_count = 1
+
+        harness.controller.start()
+
+        message = "无法同步开机启动设置。"
+        self.assertEqual(harness.notices, [message])
+        self.assertLess(
+            harness.events.index("tray-show"),
+            harness.events.index(("notice", message)),
+        )
+
+        harness.events.clear()
+        self.assertTrue(
+            harness.controller.apply_settings_draft(SettingsDraft(Hotkey(), False))
+        )
+        self.assertEqual(
+            harness.events,
+            [
+                ("autostart-read",),
+                ("autostart", False),
+            ],
+        )
+        self.assertEqual(len(harness.writes), 1)
+
     def test_invalid_settings_save_failure_restores_exact_autostart_snapshot(
         self,
     ) -> None:
@@ -624,6 +681,104 @@ class ControllerTests(unittest.TestCase):
             ],
         )
         self.assertIsNone(harness.controller.pending_image_bgr)
+
+    def test_capture_stops_if_event_flush_requests_exit(self) -> None:
+        harness = self._harness(model_state=ModelState.READY)
+        harness.controller.start()
+        harness.application.process_events_callback = harness.controller.request_exit
+
+        self.assertFalse(harness.controller.request_capture())
+
+        self.assertEqual(harness.capture_calls, [])
+        self.assertEqual(harness.overlays, [])
+        self.assertEqual(harness.controller.state.task_state, TaskState.IDLE)
+        self.assertIn("worker-shutdown", harness.events)
+
+    def test_capture_rehides_windows_reopened_during_event_flush(self) -> None:
+        harness = self._harness(model_state=ModelState.READY)
+        harness.controller.start()
+        harness.tray.context_menu_visible = True
+        visible_at_capture: list[tuple[bool, bool, bool, bool]] = []
+
+        def reopen_windows() -> None:
+            harness.settings.show()
+            harness.result.show()
+            harness.error.show_error("安全消息。", "safe-diagnostic")
+            harness.tray.context_menu_visible = True
+
+        def capture() -> CaptureFrame:
+            visible_at_capture.append(
+                (
+                    harness.settings.visible,
+                    harness.result.visible,
+                    harness.error.visible,
+                    harness.tray.context_menu_visible,
+                )
+            )
+            return self._frame()
+
+        harness.application.process_events_callback = reopen_windows
+        harness.controller._capture_function = capture
+
+        self.assertTrue(harness.controller.request_capture())
+        self.assertEqual(visible_at_capture, [(False, False, False, False)])
+        self.assertEqual(harness.tray.context_menu_hide_calls, 2)
+
+    def test_instance_settings_command_is_deferred_for_every_capture_exit(
+        self,
+    ) -> None:
+        for transition in ("submit", "cancel", "error"):
+            with self.subTest(transition=transition):
+                harness = self._harness(model_state=ModelState.READY)
+                harness.controller.start()
+                if transition == "error":
+                    def deliver_command() -> None:
+                        harness.server.command_received.emit("open-settings")
+
+                    def fail_capture() -> CaptureFrame:
+                        raise RuntimeError("private capture failure")
+
+                    harness.application.process_events_callback = deliver_command
+                    harness.controller._capture_function = fail_capture
+                    self.assertFalse(harness.controller.request_capture())
+                else:
+                    self.assertTrue(harness.controller.request_capture())
+                    harness.server.command_received.emit("open-settings")
+                    self.assertFalse(harness.settings.visible)
+                    if transition == "submit":
+                        harness.overlays[-1].selection_submitted.emit(
+                            QRect(0, 0, 3, 2)
+                        )
+                    else:
+                        harness.overlays[-1].cancelled.emit()
+
+                self.qt_application.processEvents()
+                self.assertTrue(harness.settings.visible)
+
+    def test_pending_instance_settings_command_is_discarded_on_exit(self) -> None:
+        harness = self._harness(model_state=ModelState.READY)
+        harness.controller.start()
+        self.assertTrue(harness.controller.request_capture())
+        harness.server.command_received.emit("open-settings")
+        harness.overlays[-1].cancelled.emit()
+
+        harness.controller.request_exit()
+        self.qt_application.processEvents()
+
+        self.assertFalse(harness.settings.visible)
+
+    def test_settings_are_blocked_only_while_capture_is_active(self) -> None:
+        harness = self._harness(model_state=ModelState.READY)
+        harness.controller.start()
+        self.assertTrue(harness.controller.request_capture())
+
+        harness.controller.show_settings()
+        self.assertFalse(harness.settings.visible)
+
+        harness.overlays[-1].selection_submitted.emit(QRect(0, 0, 3, 2))
+        self.assertEqual(harness.controller.state.task_state, TaskState.RECOGNIZING)
+        harness.controller.show_settings()
+        self.assertTrue(harness.settings.visible)
 
     def test_success_replaces_and_failure_restores_old_result(self) -> None:
         harness = self._harness(model_state=ModelState.READY)
@@ -784,6 +939,42 @@ class ControllerTests(unittest.TestCase):
         self.assertTrue(harness.timer.stopped)
         self.assertTrue(harness.application.quit_called)
         self.assertNotIn(("force-exit", 1), harness.events)
+
+    def test_shutdown_failure_is_recorded_and_propagated(self) -> None:
+        harness = self._harness(model_state=ModelState.READY)
+        harness.controller.start()
+        failure = Failure(
+            "OcrShutdownError",
+            "The OCR engine did not shut down cleanly.",
+            "ocr-close-failed",
+        )
+        harness.worker.shutdown_failure = failure
+        harness.worker.wait_result = False
+
+        harness.controller.request_exit()
+        harness.worker.shutdown_finished.emit(failure)
+
+        self.assertIs(harness.controller.shutdown_failure, failure)
+        self.assertTrue(harness.application.quit_called)
+        self.assertFalse(harness.controller.wait_for_shutdown())
+
+    def test_nested_force_prompt_does_nothing_after_shutdown_completes(self) -> None:
+        for answer in (False, True):
+            with self.subTest(answer=answer):
+                harness = self._harness(model_state=ModelState.READY)
+                harness.controller.start()
+
+                def prompt() -> bool:
+                    harness.worker.shutdown_finished.emit(None)
+                    return answer
+
+                harness.controller._force_exit_prompt = prompt
+                harness.controller.request_exit()
+                harness.timer.timeout.emit()
+
+                self.assertTrue(harness.application.quit_called)
+                self.assertEqual(harness.timer.starts, [10_000])
+                self.assertNotIn(("force-exit", 1), harness.events)
 
     def test_packaged_icon_path_matches_staging_contract(self) -> None:
         self.assertEqual(

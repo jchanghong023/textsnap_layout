@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -13,16 +15,48 @@ from scripts.release_pipeline import PeValidationError, inspect_pe, sha256_file
 
 
 def _run(
-    command: list[str], *, cwd: Path | None = None
+    command: list[str],
+    *,
+    cwd: Path | None = None,
+    environment: Mapping[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         command,
         cwd=cwd,
+        env=dict(environment) if environment is not None else None,
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
     )
+
+
+def resolve_toolchain(
+    toolchain_prefix: str,
+) -> tuple[str, str, dict[str, str]]:
+    resolved: list[str] = []
+    for basename in ("gcc", "windres"):
+        executable = f"{toolchain_prefix}{basename}"
+        located = shutil.which(executable)
+        if located is None:
+            raise RuntimeError(f"required MinGW tool is unavailable: {executable}")
+        resolved.append(str(Path(located).resolve(strict=True)))
+
+    environment = os.environ.copy()
+    tool_directories: list[str] = []
+    directory_keys: set[str] = set()
+    for executable in resolved:
+        directory = str(Path(executable).parent)
+        key = os.path.normcase(os.path.normpath(directory))
+        if key in directory_keys:
+            continue
+        directory_keys.add(key)
+        tool_directories.append(directory)
+    existing_path = environment.get("PATH")
+    environment["PATH"] = os.pathsep.join(
+        [*tool_directories, *([existing_path] if existing_path else [])]
+    )
+    return resolved[0], resolved[1], environment
 
 
 def build_launcher(
@@ -32,16 +66,19 @@ def build_launcher(
     icon_output: Path | None = None,
     toolchain_prefix: str = "x86_64-w64-mingw32-",
 ) -> dict[str, Any]:
-    gcc = f"{toolchain_prefix}gcc"
-    windres = f"{toolchain_prefix}windres"
-    for executable in (gcc, windres):
-        if shutil.which(executable) is None:
-            raise RuntimeError(f"required MinGW tool is unavailable: {executable}")
-    machine = _run([gcc, "-dumpmachine"]).stdout.strip()
+    gcc, windres, toolchain_environment = resolve_toolchain(toolchain_prefix)
+    machine = _run([gcc, "-dumpmachine"], environment=toolchain_environment).stdout.strip()
     if not machine.startswith("x86_64-w64-mingw32"):
         raise RuntimeError(f"toolchain must target x86_64-w64-mingw32, got {machine!r}")
-    gcc_version = _run([gcc, "-dumpfullversion", "-dumpversion"]).stdout.strip()
-    windres_version = _run([windres, "--version"]).stdout.splitlines()[0].strip()
+    gcc_version = _run(
+        [gcc, "-dumpfullversion", "-dumpversion"],
+        environment=toolchain_environment,
+    ).stdout.strip()
+    windres_version = (
+        _run([windres, "--version"], environment=toolchain_environment)
+        .stdout.splitlines()[0]
+        .strip()
+    )
     if not gcc_version or not windres_version:
         raise RuntimeError("MinGW toolchain version identity is unavailable")
 
@@ -74,6 +111,7 @@ def build_launcher(
                 str(resource_object),
             ],
             cwd=temporary,
+            environment=toolchain_environment,
         )
         temporary_output = temporary / "TextSnapLayout.exe"
         _run(
@@ -100,7 +138,8 @@ def build_launcher(
                 str(resource_object),
                 "-lshell32",
                 "-luser32",
-            ]
+            ],
+            environment=toolchain_environment,
         )
         info = inspect_pe(temporary_output, display_path="TextSnapLayout.exe")
         if info.machine != 0x8664 or info.optional_magic != 0x20B:

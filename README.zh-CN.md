@@ -22,8 +22,22 @@ Windows x64 的便携构建流水线。项目只用于个人多台电脑，不�
    原始换行。
 
 程序只允许用户明确保存的 `data/settings.json` 发生变化；不上传、不遥测、
-不检查更新、不下载模型，也不主动保存截图、OCR 文本、历史或日志。隐私保证是
-“不上传、不主动持久化”，不声称对已释放内存执行安全擦除。
+不检查更新、不下载模型，也不主动保存截图、OCR 文本、历史或默认运行日志。
+隐私保证是“不上传、不主动持久化”，不声称对已释放内存执行安全擦除。
+
+无控制台的 GUI 启动或模型加载需要排障时，可显式启用包外 JSONL 阶段日志：
+
+```powershell
+$env:TEXTSNAP_DIAGNOSTIC_LOG = Join-Path $env:TEMP 'TextSnapLayout-diagnostic.jsonl'
+.\TextSnapLayout.exe
+```
+
+日志逐行记录进程、单实例、离线保护、Qt、托盘、热键、模型加载、OCR 任务和退出
+阶段的 UTC 时间、累计耗时及成功/失败状态。它不记录截图、OCR 正文、异常消息或
+用户路径，也不会写入程序目录。完成复现并从托盘退出后，可执行
+`Remove-Item Env:TEXTSNAP_DIAGNOSTIC_LOG` 恢复默认无日志模式。若日志中连
+`process.start` 都不存在，应先确认目标为包外绝对路径、父目录存在且当前用户可
+写；这些条件均满足时，故障才发生在嵌入式 Python 进入应用代码之前。
 
 若要移动或删除程序目录，请先关闭开机启动。保持开机启动后移动目录时，运行新
 位置会更新本应用自己的 HKCU Run 值。
@@ -103,7 +117,7 @@ python3 -B -m scripts.build_release verify \
 ```bash
 python3 -B -m scripts.build_release package \
   --lock-dir vendor-lock \
-  --stage-dir /absolute/path/to/release/TextSnapLayout \
+  --stage-dir /absolute/path/to/build/TextSnapLayout \
   --output-dir /absolute/path/to/artifacts
 ```
 

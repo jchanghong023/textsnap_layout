@@ -30,6 +30,8 @@ class QtInstanceTests(unittest.TestCase):
         from textsnap.qt_instance import InstanceCommandServer
 
         name = f"TextSnapLayout-test-{uuid.uuid4().hex}"
+        if sys.platform == "win32":
+            name = rf"\\.\pipe\LOCAL\{name}"
         server = InstanceCommandServer(server_name=name)
         received: list[str] = []
         server.command_received.connect(received.append)
@@ -61,6 +63,15 @@ class QtInstanceTests(unittest.TestCase):
             loop.exec()
         self.assertEqual(sender.wait(timeout=1), 0)
         self.assertEqual(received, ["open-settings"])
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows named pipe only")
+    def test_default_server_name_uses_logon_session_pipe_namespace(self) -> None:
+        from textsnap.qt_instance import LOCAL_SERVER_NAME
+
+        self.assertEqual(
+            LOCAL_SERVER_NAME,
+            r"\\.\pipe\LOCAL\TextSnapLayout.Command.v1",
+        )
 
     def test_invalid_send_arguments_are_rejected(self) -> None:
         from textsnap.qt_instance import send_instance_command

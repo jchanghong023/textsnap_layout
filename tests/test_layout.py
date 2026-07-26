@@ -94,6 +94,13 @@ class LayoutTests(unittest.TestCase):
         ]
         self.assertEqual(build_layout(spans).text, "A  B")
 
+    def test_physical_gap_survives_mixed_box_cell_widths(self) -> None:
+        spans = [
+            _span("AB", 0, 0, 15, 10),
+            _span("X", 20, 0, 30, 10),
+        ]
+        self.assertEqual(build_layout(spans).text, "AB X")
+
     def test_trailing_spaces_and_final_newline_are_not_added(self) -> None:
         spans = [_span("value   ", 0, 0, 80, 10)]
         result = build_layout(spans).text

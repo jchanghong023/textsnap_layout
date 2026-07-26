@@ -15,7 +15,12 @@ from .windows.instance import (
     encode_instance_command,
 )
 
-LOCAL_SERVER_NAME = "TextSnapLayout.Command.v1"
+_SERVER_BASENAME = "TextSnapLayout.Command.v1"
+LOCAL_SERVER_NAME = (
+    rf"\\.\pipe\LOCAL\{_SERVER_BASENAME}"
+    if sys.platform == "win32"
+    else _SERVER_BASENAME
+)
 
 
 class LocalCommandError(RuntimeError):

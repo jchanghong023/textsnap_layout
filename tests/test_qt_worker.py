@@ -1,24 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
+import gc
+import importlib.util
 import os
 from threading import Event
 import time
 import unittest
-
-
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-
-try:
-    from PySide6.QtCore import QCoreApplication, QThread
-    from PySide6.QtTest import QSignalSpy
-    from PySide6.QtWidgets import QApplication
-except (ImportError, OSError) as exc:
-    _PYSIDE_AVAILABLE = False
-    _PYSIDE_SKIP_REASON = f"PySide6 QtCore/QtTest unavailable: {exc}"
-else:
-    _PYSIDE_AVAILABLE = True
-    _PYSIDE_SKIP_REASON = ""
+import weakref
 
 from textsnap.domain import (
     Cancelled,
@@ -28,6 +17,19 @@ from textsnap.domain import (
     TaskState,
 )
 
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+_PYSIDE_AVAILABLE = importlib.util.find_spec("PySide6") is not None
+
+if _PYSIDE_AVAILABLE:
+    from PySide6.QtCore import QCoreApplication, QThread
+    from PySide6.QtTest import QSignalSpy
+    from PySide6.QtWidgets import QApplication
+
+if not _PYSIDE_AVAILABLE:
+    _PYSIDE_SKIP_REASON = "PySide6 is not installed"
+else:
+    _PYSIDE_SKIP_REASON = ""
 if _PYSIDE_AVAILABLE:
     from textsnap.qt_worker import OcrTask, OcrThreadController
 
@@ -45,11 +47,13 @@ class FakeEngine:
         initialize_result: Failure | None = None,
         outcome: object | None = None,
         block_recognition: bool = False,
+        close_result: Failure | None = None,
     ) -> None:
         self.events = events
         self.initialize_result = initialize_result
         self.outcome = Empty() if outcome is None else outcome
         self.block_recognition = block_recognition
+        self.close_result = close_result
         self.recognition_started = Event()
         self.release_recognition = Event()
         self.recognize_calls = 0
@@ -82,7 +86,7 @@ class FakeEngine:
 
     def close(self):
         self.events.append(("close", self._thread_name()))
-        return None
+        return self.close_result
 
 
 @unittest.skipUnless(_PYSIDE_AVAILABLE, _PYSIDE_SKIP_REASON)
@@ -248,6 +252,53 @@ class QtWorkerTests(unittest.TestCase):
         self.assertTrue(controller.wait_for_shutdown())
         self.assertFalse(controller.running)
         self.assertIn(("close", "textsnap-ocr-worker"), events)
+
+    def test_shutdown_wait_reports_close_failure_without_gui_signal_delivery(
+        self,
+    ) -> None:
+        events: list[tuple[str, str]] = []
+        failure = Failure(
+            "OcrShutdownError",
+            "The OCR engine did not shut down cleanly.",
+            "ocr-close-failed",
+        )
+        engine = FakeEngine(events, close_result=failure)
+        controller = self._controller(engine)
+        self._start_ready(controller)
+
+        controller.shutdown()
+
+        self.assertFalse(controller.wait_for_shutdown())
+        self.assertFalse(controller.running)
+        self.assertIs(controller.shutdown_failure, failure)
+        self.assertIn(("close", "textsnap-ocr-worker"), events)
+
+    def test_shutdown_wait_releases_active_task_without_gui_signal_delivery(
+        self,
+    ) -> None:
+        events: list[tuple[str, str]] = []
+        engine = FakeEngine(events, block_recognition=True)
+        controller = self._controller(engine)
+        rejected_spy = QSignalSpy(controller.task_rejected)
+        self._start_ready(controller)
+        image = _SensitiveImage()
+        image_reference = weakref.ref(image)
+
+        task = controller.submit(image)
+        self.assertIsNotNone(task)
+        self.assertTrue(engine.recognition_started.wait(1.0))
+        controller.shutdown()
+        del image
+        del task
+
+        self.assertTrue(controller.wait_for_shutdown())
+        self.assertIsNone(controller.active_task)
+        self.assertEqual(controller.task_state, TaskState.IDLE)
+        gc.collect()
+        self.assertIsNone(image_reference())
+
+        self.application.processEvents()
+        self.assertEqual(rejected_spy.count(), 0)
 
     def test_model_failure_and_factory_exception_are_sanitized(self) -> None:
         events: list[tuple[str, str]] = []

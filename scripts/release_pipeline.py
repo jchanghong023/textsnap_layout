@@ -91,16 +91,25 @@ PINNED_RESOURCE_IDENTITIES = {
 STAGING_STATE_NAME = ".textsnap-staging.json"
 BUILD_MANIFEST_NAME = "BUILD_MANIFEST.json"
 ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+STAGING_STATE_DIGEST_SCOPE = "files-and-directories"
 
 _HASH_CHUNK_SIZE = 1024 * 1024
 _WINDOWS_RESERVED_NAMES = frozenset(
     {
         "CON",
+        "CONIN$",
+        "CONOUT$",
         "PRN",
         "AUX",
         "NUL",
         *(f"COM{i}" for i in range(1, 10)),
         *(f"LPT{i}" for i in range(1, 10)),
+        "COM¹",
+        "COM²",
+        "COM³",
+        "LPT¹",
+        "LPT²",
+        "LPT³",
     }
 )
 _INVALID_WINDOWS_CHARS = frozenset('<>:"|?*')
@@ -774,6 +783,8 @@ def validate_windows_relative_path(path: str) -> PurePosixPath:
     if path.startswith("/") or path.startswith("//") or re.match(r"^[A-Za-z]:", path):
         raise UnsafeArchiveError(f"absolute or drive path is forbidden: {path!r}")
     pure = PurePosixPath(path)
+    if pure.as_posix() != path:
+        raise UnsafeArchiveError(f"non-canonical archive path: {path!r}")
     if not pure.parts or any(part in {"", ".", ".."} for part in pure.parts):
         raise UnsafeArchiveError(f"non-canonical archive path: {path!r}")
     for part in pure.parts:
@@ -819,6 +830,20 @@ def _zip_member_is_symlink(info: zipfile.ZipInfo) -> bool:
     return stat.S_ISLNK(unix_mode)
 
 
+def _canonical_archive_member_path(
+    name: str,
+    *,
+    is_directory: bool,
+) -> str:
+    if name.endswith("/"):
+        if not is_directory or name.endswith("//"):
+            raise UnsafeArchiveError(
+                f"non-canonical archive directory path: {name!r}"
+            )
+        name = name[:-1]
+    return validate_windows_relative_path(name).as_posix()
+
+
 def validate_zip_members(
     archive: zipfile.ZipFile,
     *,
@@ -827,9 +852,10 @@ def validate_zip_members(
     result: dict[str, zipfile.ZipInfo] = {}
     total = 0
     for info in archive.infolist():
-        name = info.filename.rstrip("/")
-        if not name:
-            continue
+        name = _canonical_archive_member_path(
+            info.filename,
+            is_directory=info.is_dir(),
+        )
         key = windows_path_key(name)
         if key in result:
             raise UnsafeArchiveError(
@@ -847,11 +873,274 @@ def validate_zip_members(
                 "ZIP uncompressed size exceeds locked safety bound"
             )
         result[key] = info
+    for key in result:
+        parts = key.split("/")
+        for index in range(1, len(parts)):
+            ancestor_key = "/".join(parts[:index])
+            ancestor = result.get(ancestor_key)
+            if ancestor is not None and not ancestor.is_dir():
+                raise UnsafeArchiveError(
+                    "ZIP non-directory member is an ancestor of another "
+                    f"member: {ancestor.filename!r}"
+                )
     return result
 
 
-def _tar_member_key(member: tarfile.TarInfo) -> str:
-    return windows_path_key(member.name.rstrip("/"))
+def _read_tar_archive_bytes(
+    archive: tarfile.TarFile,
+    offset: int,
+    size: int,
+) -> bytes:
+    stream = archive.fileobj
+    try:
+        original_position = stream.tell()
+        stream.seek(offset)
+        data = stream.read(size)
+    except (AttributeError, OSError) as exc:
+        raise UnsafeArchiveError("TAR stream must support safe random access") from exc
+    finally:
+        try:
+            stream.seek(original_position)
+        except (AttributeError, OSError, UnboundLocalError):
+            pass
+    if len(data) != size:
+        raise UnsafeArchiveError("truncated TAR member header")
+    return data
+
+
+def _tar_header_path(
+    archive: tarfile.TarFile,
+    header: bytes,
+) -> tuple[str, bytes]:
+    member_type = header[156:157]
+    name = tarfile.nts(header[0:100], archive.encoding, archive.errors)
+    prefix = tarfile.nts(header[345:500], archive.encoding, archive.errors)
+    if prefix and member_type not in tarfile.GNU_TYPES:
+        name = f"{prefix}/{name}"
+    return name, member_type
+
+
+def _tar_header_size(header: bytes, context: str) -> int:
+    try:
+        size = tarfile.nti(header[124:136])
+    except (ValueError, tarfile.HeaderError) as exc:
+        raise UnsafeArchiveError(f"invalid TAR size for {context}") from exc
+    if size < 0:
+        raise UnsafeArchiveError(f"negative TAR size for {context}")
+    return size
+
+
+def _tar_padded_size(size: int) -> int:
+    return (size + tarfile.BLOCKSIZE - 1) & ~(tarfile.BLOCKSIZE - 1)
+
+
+def _decode_pax_field(
+    value: bytes,
+    *,
+    encoding: str,
+    archive: tarfile.TarFile,
+    fallback_encoding: str | None = None,
+) -> str:
+    try:
+        return value.decode(encoding, "strict")
+    except UnicodeDecodeError:
+        return value.decode(
+            fallback_encoding or archive.encoding,
+            archive.errors,
+        )
+
+
+def _tar_pax_path_declarations(
+    archive: tarfile.TarFile,
+    data: bytes,
+) -> list[tuple[str, str]]:
+    raw_fields: list[tuple[bytes, bytes]] = []
+    position = 0
+    path_encoding: str | None = None
+    while position < len(data) and data[position] != 0:
+        separator = data.find(b" ", position)
+        if separator < 0 or not data[position:separator].isdigit():
+            raise UnsafeArchiveError("invalid PAX TAR record length")
+        try:
+            length = int(data[position:separator])
+        except ValueError as exc:
+            raise UnsafeArchiveError("invalid PAX TAR record length") from exc
+        end = position + length
+        if length < 5 or end > len(data) or data[end - 1 : end] != b"\n":
+            raise UnsafeArchiveError("invalid PAX TAR record framing")
+        raw_key, equals, raw_value = data[separator + 1 : end - 1].partition(b"=")
+        if not raw_key or equals != b"=":
+            raise UnsafeArchiveError("invalid PAX TAR record")
+        raw_fields.append((raw_key, raw_value))
+        if raw_key == b"hdrcharset" and path_encoding is None:
+            path_encoding = (
+                archive.encoding if raw_value == b"BINARY" else "utf-8"
+            )
+        position = end
+
+    if path_encoding is None:
+        path_encoding = "utf-8"
+    paths: list[tuple[str, str]] = []
+    for raw_key, raw_value in raw_fields:
+        key = _decode_pax_field(
+            raw_key,
+            encoding="utf-8",
+            archive=archive,
+            fallback_encoding="utf-8",
+        )
+        if key in {"path", "GNU.sparse.name"}:
+            encoding = path_encoding if key == "path" else "utf-8"
+            paths.append(
+                (
+                    key,
+                    _decode_pax_field(
+                        raw_value,
+                        encoding=encoding,
+                        archive=archive,
+                        fallback_encoding=None if key == "path" else "utf-8",
+                    ),
+                )
+            )
+    return paths
+
+
+def _tar_header_is_declared_path_placeholder(
+    archive: tarfile.TarFile,
+    header: bytes,
+    declarations: Sequence[str],
+) -> bool:
+    raw_name = header[0:100].split(b"\0", 1)[0]
+    raw_prefix = header[345:500].split(b"\0", 1)[0]
+    if raw_prefix:
+        return False
+    for declaration in declarations:
+        candidates: list[bytes] = []
+        try:
+            candidates.append(declaration.encode("ascii", "replace")[:100])
+            candidates.append(
+                declaration.encode(archive.encoding, archive.errors)[:100]
+            )
+        except UnicodeError:
+            continue
+        if raw_name in candidates:
+            return True
+    return False
+
+
+def _validate_tar_path_declaration(
+    path: str,
+    *,
+    is_directory: bool,
+) -> None:
+    try:
+        _canonical_archive_member_path(path, is_directory=is_directory)
+    except UnicodeError as exc:
+        raise UnsafeArchiveError("TAR path cannot be represented safely") from exc
+
+
+def _scan_tar_path_declarations(
+    archive: tarfile.TarFile,
+    members: Sequence[tarfile.TarInfo],
+) -> None:
+    actual_headers = {
+        member.offset_data - tarfile.BLOCKSIZE: member for member in members
+    }
+    actual_offsets = sorted(actual_headers)
+    visited_actual_headers: set[int] = set()
+    global_declarations: dict[str, str] = {}
+    pending_declarations: list[str] = []
+    extension_types = {
+        tarfile.GNUTYPE_LONGNAME,
+        tarfile.GNUTYPE_LONGLINK,
+        tarfile.XHDTYPE,
+        tarfile.XGLTYPE,
+        tarfile.SOLARIS_XHDTYPE,
+    }
+    position = 0
+    while True:
+        header = _read_tar_archive_bytes(
+            archive, position, tarfile.BLOCKSIZE
+        )
+        if header == tarfile.NUL * tarfile.BLOCKSIZE:
+            break
+        member_type = header[156:157]
+        size = _tar_header_size(header, f"header at offset {position}")
+        member = actual_headers.get(position)
+        if member is not None:
+            for path in [
+                *global_declarations.values(),
+                *pending_declarations,
+            ]:
+                _validate_tar_path_declaration(
+                    path,
+                    is_directory=member.isdir(),
+                )
+            raw_path, _raw_type = _tar_header_path(archive, header)
+            try:
+                _validate_tar_path_declaration(
+                    raw_path,
+                    is_directory=member.isdir(),
+                )
+            except UnsafeArchiveError:
+                if not _tar_header_is_declared_path_placeholder(
+                    archive,
+                    header,
+                    [
+                        *global_declarations.values(),
+                        *pending_declarations,
+                    ],
+                ):
+                    raise
+            visited_actual_headers.add(position)
+            pending_declarations.clear()
+            payload_size = member.size if member.isreg() else 0
+            position = member.offset_data + _tar_padded_size(payload_size)
+            continue
+        if member_type not in extension_types:
+            raise UnsafeArchiveError(
+                f"unmatched TAR header at offset {position}"
+            )
+
+        payload = _read_tar_archive_bytes(
+            archive,
+            position + tarfile.BLOCKSIZE,
+            size,
+        )
+        next_member = next(
+            (
+                actual_headers[offset]
+                for offset in actual_offsets
+                if offset > position
+            ),
+            None,
+        )
+        if member_type == tarfile.GNUTYPE_LONGNAME:
+            path = tarfile.nts(payload, archive.encoding, archive.errors)
+            _validate_tar_path_declaration(
+                path,
+                is_directory=bool(next_member and next_member.isdir()),
+            )
+            pending_declarations.append(path)
+        elif member_type in {
+            tarfile.XHDTYPE,
+            tarfile.XGLTYPE,
+            tarfile.SOLARIS_XHDTYPE,
+        }:
+            declarations = _tar_pax_path_declarations(archive, payload)
+            for _key, path in declarations:
+                _validate_tar_path_declaration(
+                    path,
+                    is_directory=bool(next_member and next_member.isdir()),
+                )
+            if member_type == tarfile.XGLTYPE:
+                for key, path in declarations:
+                    global_declarations[key] = path
+            else:
+                pending_declarations.extend(path for _key, path in declarations)
+        position += tarfile.BLOCKSIZE + _tar_padded_size(size)
+
+    if visited_actual_headers != set(actual_headers):
+        raise UnsafeArchiveError("TAR path scan did not cover every member")
 
 
 def validate_tar_members(
@@ -861,18 +1150,24 @@ def validate_tar_members(
 ) -> dict[str, tarfile.TarInfo]:
     result: dict[str, tarfile.TarInfo] = {}
     total = 0
-    for member in archive.getmembers():
-        name = member.name.rstrip("/")
-        if not name:
-            continue
-        key = _tar_member_key(member)
-        if key in result:
+    members = archive.getmembers()
+    for member in members:
+        if member.type == tarfile.GNUTYPE_SPARSE or member.sparse is not None:
             raise UnsafeArchiveError(
-                f"duplicate or Windows case-colliding TAR member: {member.name!r}"
+                f"TAR sparse files are forbidden: {member.name!r}"
             )
         if not (member.isdir() or member.isreg()):
             raise UnsafeArchiveError(
                 f"TAR links/devices/special files are forbidden: {member.name!r}"
+            )
+        final_name = _canonical_archive_member_path(
+            member.name,
+            is_directory=member.isdir(),
+        )
+        key = windows_path_key(final_name)
+        if key in result:
+            raise UnsafeArchiveError(
+                f"duplicate or Windows case-colliding TAR member: {member.name!r}"
             )
         total += member.size if member.isreg() else 0
         if maximum_uncompressed_size is not None and total > maximum_uncompressed_size:
@@ -880,6 +1175,7 @@ def validate_tar_members(
                 "TAR uncompressed size exceeds locked safety bound"
             )
         result[key] = member
+    _scan_tar_path_declarations(archive, members)
     return result
 
 
@@ -1873,16 +2169,19 @@ def write_runtime_configuration(stage_root: Path) -> dict[str, Any]:
         encoding="utf-8",
         newline="\n",
     )
-    for relative in ("runtime/pdx-cache", "runtime/pdx-cache/temp", "data"):
+    precreated_directories = (
+        "runtime/pdx-cache",
+        "runtime/pdx-cache/temp",
+        "runtime/pdx-cache/func_ret",
+        "runtime/pdx-cache/locks",
+        "data",
+    )
+    for relative in precreated_directories:
         (stage_root / relative).mkdir(parents=True, exist_ok=True)
     return {
         "pth": "runtime/python313._pth",
         "qt_conf": "runtime/qt.conf",
-        "precreated_directories": [
-            "runtime/pdx-cache",
-            "runtime/pdx-cache/temp",
-            "data",
-        ],
+        "precreated_directories": list(precreated_directories),
     }
 
 
@@ -2412,10 +2711,83 @@ def verify_locked_models(
     return output
 
 
+def verify_locked_font(
+    locks: LockSet,
+    stage_root: Path,
+) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for artifact in locks.runtime_resources:
+        if artifact.get("kind") != "font":
+            continue
+        unpack = _require_mapping(artifact.get("unpack"), f"{artifact['id']} unpack")
+        selected = _require_list(
+            unpack.get("selected_files"), f"{artifact['id']} selected files"
+        )
+        files: list[dict[str, Any]] = []
+        for entry in selected:
+            locked_destination = validate_windows_relative_path(
+                str(entry["destination_path"])
+            ).as_posix()
+            if not locked_destination.startswith("fonts/"):
+                raise LockValidationError(
+                    f"{artifact['id']}: unsupported font destination "
+                    f"{locked_destination!r}"
+                )
+            relative = f"assets/{locked_destination}"
+            verify_file(
+                safe_destination(stage_root, relative),
+                str(entry["sha256"]),
+                int(entry["size"]),
+            )
+            files.append(
+                {
+                    "path": relative,
+                    "sha256": entry["sha256"],
+                    "size": entry["size"],
+                }
+            )
+        output.append({"id": artifact["id"], "files": files})
+    if len(output) != 1:
+        raise PipelineError("exactly one staged application font must be verified")
+    return output
+
+
+def verify_python_runtime_inspected_files(
+    locks: LockSet,
+    stage_root: Path,
+) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for artifact in locks.runtime_resources:
+        if artifact.get("kind") != "python_embeddable_runtime":
+            continue
+        files: list[dict[str, Any]] = []
+        for inspected in artifact.get("inspected_files", ()):
+            runtime_relative = validate_windows_relative_path(
+                str(inspected["path"])
+            ).as_posix()
+            relative = f"runtime/{runtime_relative}"
+            verify_file(
+                safe_destination(stage_root, relative),
+                str(inspected["sha256"]),
+                int(inspected["size"]),
+            )
+            files.append(
+                {
+                    "path": relative,
+                    "sha256": inspected["sha256"],
+                    "size": inspected["size"],
+                }
+            )
+        output.append({"id": artifact["id"], "files": files})
+    if len(output) != 1:
+        raise PipelineError("exactly one staged CPython runtime must be verified")
+    return output
+
+
 def _iter_tree_entries(
     root: Path,
     *,
-    excluded_names: frozenset[str] = frozenset(),
+    excluded_paths: frozenset[str] = frozenset(),
 ) -> Iterator[tuple[str, Path]]:
     for path in sorted(
         root.rglob("*"),
@@ -2425,7 +2797,7 @@ def _iter_tree_entries(
         ),
     ):
         relative = path.relative_to(root).as_posix()
-        if path.name in excluded_names:
+        if relative in excluded_paths:
             continue
         if path.is_symlink():
             raise PipelineError(f"staging symlink is forbidden: {relative}")
@@ -2436,11 +2808,11 @@ def _iter_tree_entries(
 def inventory_tree(
     root: Path,
     *,
-    excluded_names: frozenset[str] = frozenset(),
+    excluded_paths: frozenset[str] = frozenset(),
 ) -> list[dict[str, Any]]:
     output: list[dict[str, Any]] = []
     keys: set[str] = set()
-    for relative, path in _iter_tree_entries(root, excluded_names=excluded_names):
+    for relative, path in _iter_tree_entries(root, excluded_paths=excluded_paths):
         key = windows_path_key(relative)
         if key in keys:
             raise PipelineError(f"Windows staging path collision: {relative}")
@@ -2449,6 +2821,33 @@ def inventory_tree(
             continue
         digest, size = sha256_file(path)
         output.append({"path": relative, "sha256": digest, "size": size})
+    return output
+
+
+def staging_state_inventory(
+    root: Path,
+    *,
+    excluded_paths: frozenset[str] = frozenset(),
+) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    keys: set[str] = set()
+    for relative, path in _iter_tree_entries(root, excluded_paths=excluded_paths):
+        key = windows_path_key(relative)
+        if key in keys:
+            raise PipelineError(f"Windows staging path collision: {relative}")
+        keys.add(key)
+        if path.is_dir():
+            output.append({"path": relative, "kind": "directory"})
+            continue
+        digest, size = sha256_file(path)
+        output.append(
+            {
+                "path": relative,
+                "kind": "file",
+                "sha256": digest,
+                "size": size,
+            }
+        )
     return output
 
 
@@ -2483,16 +2882,23 @@ def validate_staging_paths(stage_root: Path) -> dict[str, Any]:
         "runtime/pythonw.exe",
         "runtime/python313._pth",
         "runtime/qt.conf",
+    ):
+        path = safe_destination(stage_root, required)
+        if not path.is_file():
+            raise PipelineError(f"required staged file is absent: {required}")
+    for required in (
         "assets/fonts",
         "models/PP-OCRv6_small_det",
         "models/PP-OCRv6_small_rec",
         "data",
         "runtime/pdx-cache",
         "runtime/pdx-cache/temp",
+        "runtime/pdx-cache/func_ret",
+        "runtime/pdx-cache/locks",
     ):
         path = safe_destination(stage_root, required)
-        if not path.exists():
-            raise PipelineError(f"required staged path is absent: {required}")
+        if not path.is_dir():
+            raise PipelineError(f"required staged directory is absent: {required}")
     pth_text = (stage_root / "runtime" / "python313._pth").read_text(encoding="utf-8")
     if "import site" in pth_text.lower():
         raise PipelineError("staged python313._pth enables site")
@@ -2513,7 +2919,7 @@ def create_build_manifest(
 ) -> dict[str, Any]:
     files = inventory_tree(
         stage_root,
-        excluded_names=frozenset({BUILD_MANIFEST_NAME, STAGING_STATE_NAME}),
+        excluded_paths=frozenset({BUILD_MANIFEST_NAME, STAGING_STATE_NAME}),
     )
     manifest = {
         "schema_version": "1.0.0",
@@ -2581,13 +2987,14 @@ def write_staging_state(
     manifest_path = stage_root / BUILD_MANIFEST_NAME
     if not manifest_path.is_file():
         raise PipelineError("cannot save staging state without BUILD_MANIFEST.json")
-    inventory = inventory_tree(
-        stage_root, excluded_names=frozenset({STAGING_STATE_NAME})
+    inventory = staging_state_inventory(
+        stage_root, excluded_paths=frozenset({STAGING_STATE_NAME})
     )
     state = {
         "schema_version": "1.0.0",
         "profile": profile,
         "manifest_sha256": sha256_file(manifest_path)[0],
+        "tree_digest_scope": STAGING_STATE_DIGEST_SCOPE,
         "tree_digest": tree_digest(inventory),
     }
     write_canonical_json(stage_root / STAGING_STATE_NAME, state)
@@ -2599,6 +3006,8 @@ def verify_saved_staging_for_package(stage_root: Path) -> dict[str, Any]:
     if not state_path.is_file():
         raise PipelineError("packaging requires a saved staging state")
     state = load_json_object(state_path)
+    if state.get("tree_digest_scope") != STAGING_STATE_DIGEST_SCOPE:
+        raise PipelineError("saved staging tree digest scope is invalid")
     if state.get("profile") != "private-use":
         raise PipelineError(
             "only profile=private-use staging may be packaged"
@@ -2606,8 +3015,8 @@ def verify_saved_staging_for_package(stage_root: Path) -> dict[str, Any]:
     manifest_path = stage_root / BUILD_MANIFEST_NAME
     if sha256_file(manifest_path)[0] != state.get("manifest_sha256"):
         raise PipelineError("BUILD_MANIFEST changed after staging was saved")
-    inventory = inventory_tree(
-        stage_root, excluded_names=frozenset({STAGING_STATE_NAME})
+    inventory = staging_state_inventory(
+        stage_root, excluded_paths=frozenset({STAGING_STATE_NAME})
     )
     if tree_digest(inventory) != state.get("tree_digest"):
         raise PipelineError("staging tree changed after validation")
@@ -2627,12 +3036,20 @@ def _zip_info(name: str, *, is_dir: bool) -> zipfile.ZipInfo:
     return info
 
 
+def _require_fixed_product_directory(product_directory: str) -> None:
+    if product_directory != PRODUCT_NAME:
+        raise PipelineError(
+            f"ZIP product directory must be exactly {PRODUCT_NAME!r}"
+        )
+
+
 def _write_deterministic_zip(
     stage_root: Path,
     output_zip: Path,
     *,
     product_directory: str = PRODUCT_NAME,
 ) -> dict[str, Any]:
+    _require_fixed_product_directory(product_directory)
     validate_windows_relative_path(product_directory)
     if "/" in product_directory:
         raise PipelineError("ZIP product directory must be a basename")
@@ -2641,12 +3058,23 @@ def _write_deterministic_zip(
         raise PipelineError(
             f"release ZIP filename must be {expected_name}, got {output_zip.name}"
         )
+    resolved_stage = stage_root.resolve()
+    checksum_path = output_zip.with_suffix(output_zip.suffix + ".sha256")
+    output_paths = (
+        output_zip.parent.resolve() / output_zip.name,
+        checksum_path.parent.resolve() / checksum_path.name,
+    )
+    if any(
+        candidate == resolved_stage or candidate.is_relative_to(resolved_stage)
+        for candidate in output_paths
+    ):
+        raise PipelineError("release ZIP and checksum must be outside staging root")
     output_zip.parent.mkdir(parents=True, exist_ok=True)
     temporary = output_zip.with_name(f".{output_zip.name}.{uuid.uuid4().hex}.tmp")
     entries = [
         (relative, path)
         for relative, path in _iter_tree_entries(
-            stage_root, excluded_names=frozenset({STAGING_STATE_NAME})
+            stage_root, excluded_paths=frozenset({STAGING_STATE_NAME})
         )
     ]
     try:
@@ -2673,12 +3101,23 @@ def _write_deterministic_zip(
         if temporary.exists():
             temporary.unlink()
     digest, size = sha256_file(output_zip)
-    checksum_path = output_zip.with_suffix(output_zip.suffix + ".sha256")
-    checksum_path.write_text(
-        f"{digest}  {output_zip.name}\n",
-        encoding="ascii",
-        newline="\n",
+    checksum_temporary = checksum_path.with_name(
+        f".{checksum_path.name}.{uuid.uuid4().hex}.tmp"
     )
+    checksum_temporary_created = False
+    try:
+        checksum_output = checksum_temporary.open("xb")
+        checksum_temporary_created = True
+        with checksum_output:
+            checksum_output.write(
+                f"{digest}  {output_zip.name}\n".encode("ascii")
+            )
+            checksum_output.flush()
+            os.fsync(checksum_output.fileno())
+        os.replace(checksum_temporary, checksum_path)
+    finally:
+        if checksum_temporary_created:
+            checksum_temporary.unlink(missing_ok=True)
     return {
         "path": str(output_zip),
         "sha256": digest,
@@ -2696,6 +3135,7 @@ def build_deterministic_zip(
 ) -> dict[str, Any]:
     """Package only a current-lock private-use staging."""
 
+    _require_fixed_product_directory(product_directory)
     validate_lock_set(locks)
     static_verify_staging(locks=locks, stage_root=stage_root)
     verify_saved_staging_for_package(stage_root)
@@ -2711,29 +3151,103 @@ def validate_zip_archive(
     *,
     expected_product_directory: str = PRODUCT_NAME,
 ) -> dict[str, Any]:
-    with zipfile.ZipFile(zip_path) as archive:
-        members = validate_zip_members(archive)
-        prefix = f"{windows_path_key(expected_product_directory)}/"
-        root_key = windows_path_key(expected_product_directory)
-        file_count = 0
-        for key, info in members.items():
-            if key != root_key and not key.startswith(prefix):
+    _require_fixed_product_directory(expected_product_directory)
+    try:
+        with zipfile.ZipFile(zip_path) as archive:
+            expected_root_name = f"{expected_product_directory}/"
+            root_info = next(
+                (
+                    info
+                    for info in archive.infolist()
+                    if info.filename == expected_root_name
+                ),
+                None,
+            )
+            if root_info is None or not root_info.is_dir():
                 raise PipelineError(
-                    f"ZIP member is outside product directory: {info.filename}"
+                    "ZIP product root must be an explicit directory member"
                 )
-            if key.endswith(f"/{STAGING_STATE_NAME.casefold()}"):
-                raise PipelineError("private staging state leaked into release ZIP")
-            if not info.is_dir():
-                file_count += 1
-            if info.date_time != ZIP_EPOCH:
-                raise PipelineError(f"non-deterministic ZIP timestamp: {info.filename}")
-        required = {
-            windows_path_key(f"{expected_product_directory}/TextSnapLayout.exe"),
-            windows_path_key(f"{expected_product_directory}/{BUILD_MANIFEST_NAME}"),
-        }
-        if not required.issubset(members):
-            raise PipelineError("ZIP lacks required launcher or manifest")
-    return {"member_count": len(members), "file_count": file_count}
+            members = validate_zip_members(archive)
+            prefix = f"{windows_path_key(expected_product_directory)}/"
+            root_key = windows_path_key(expected_product_directory)
+            root_info = members.get(root_key)
+            if (
+                root_info is None
+                or not root_info.is_dir()
+                or root_info.filename != f"{expected_product_directory}/"
+            ):
+                raise PipelineError(
+                    "ZIP product root must be an explicit directory member"
+                )
+            private_state_key = windows_path_key(
+                f"{expected_product_directory}/{STAGING_STATE_NAME}"
+            )
+            file_count = 0
+            for key, info in members.items():
+                if key != root_key and not key.startswith(prefix):
+                    raise PipelineError(
+                        f"ZIP member is outside product directory: {info.filename}"
+                    )
+                if key == private_state_key:
+                    raise PipelineError("private staging state leaked into release ZIP")
+                if info.is_dir() and info.file_size != 0:
+                    raise PipelineError(
+                        f"release ZIP directory member is not empty: {info.filename!r}"
+                    )
+                if not info.is_dir():
+                    file_count += 1
+                try:
+                    with archive.open(info, "r") as stream:
+                        _digest, extracted_size = sha256_stream(stream)
+                except (
+                    OSError,
+                    EOFError,
+                    RuntimeError,
+                    NotImplementedError,
+                    zipfile.BadZipFile,
+                    zlib.error,
+                ) as exc:
+                    raise PipelineError(
+                        f"cannot read release ZIP member {info.filename!r}"
+                    ) from exc
+                if extracted_size != info.file_size:
+                    raise PipelineError(
+                        f"release ZIP member size mismatch: {info.filename!r}"
+                    )
+                if info.date_time != ZIP_EPOCH:
+                    raise PipelineError(
+                        f"non-deterministic ZIP timestamp: {info.filename}"
+                    )
+            required = {
+                windows_path_key(
+                    f"{expected_product_directory}/TextSnapLayout.exe"
+                ): f"{expected_product_directory}/TextSnapLayout.exe",
+                windows_path_key(
+                    f"{expected_product_directory}/{BUILD_MANIFEST_NAME}"
+                ): f"{expected_product_directory}/{BUILD_MANIFEST_NAME}",
+            }
+            for key, expected_name in required.items():
+                info = members.get(key)
+                if (
+                    info is None
+                    or info.is_dir()
+                    or info.filename != expected_name
+                ):
+                    raise PipelineError(
+                        "ZIP lacks required regular launcher or manifest"
+                    )
+        return {"member_count": len(members), "file_count": file_count}
+    except PipelineError:
+        raise
+    except (
+        OSError,
+        EOFError,
+        RuntimeError,
+        zipfile.BadZipFile,
+        zipfile.LargeZipFile,
+        zlib.error,
+    ) as exc:
+        raise PipelineError(f"invalid release ZIP archive: {zip_path.name}") from exc
 
 
 def validate_build_manifest(stage_root: Path) -> dict[str, Any]:
@@ -2743,7 +3257,7 @@ def validate_build_manifest(stage_root: Path) -> dict[str, Any]:
         raise PipelineError("BUILD_MANIFEST files must be an array")
     actual_files = inventory_tree(
         stage_root,
-        excluded_names=frozenset({BUILD_MANIFEST_NAME, STAGING_STATE_NAME}),
+        excluded_paths=frozenset({BUILD_MANIFEST_NAME, STAGING_STATE_NAME}),
     )
     if actual_files != expected_files:
         raise PipelineError("staged files differ from BUILD_MANIFEST inventory")
@@ -2762,11 +3276,13 @@ def validate_build_manifest(stage_root: Path) -> dict[str, Any]:
 def verify_saved_staging(stage_root: Path) -> dict[str, Any]:
     state_path = stage_root / STAGING_STATE_NAME
     state = load_json_object(state_path)
+    if state.get("tree_digest_scope") != STAGING_STATE_DIGEST_SCOPE:
+        raise PipelineError("saved staging tree digest scope is invalid")
     manifest_path = stage_root / BUILD_MANIFEST_NAME
     if sha256_file(manifest_path)[0] != state.get("manifest_sha256"):
         raise PipelineError("saved staging manifest hash is invalid")
-    inventory = inventory_tree(
-        stage_root, excluded_names=frozenset({STAGING_STATE_NAME})
+    inventory = staging_state_inventory(
+        stage_root, excluded_paths=frozenset({STAGING_STATE_NAME})
     )
     if tree_digest(inventory) != state.get("tree_digest"):
         raise PipelineError("saved staging tree digest is invalid")
@@ -2779,6 +3295,18 @@ def publish_staging(
     output_stage: Path,
 ) -> None:
     os.replace(temporary, output_stage)
+
+
+def create_temporary_staging(output_stage: Path) -> Path:
+    parent = output_stage.parent
+    for _attempt in range(128):
+        temporary = parent / f".ts-{uuid.uuid4().hex[:8]}"
+        try:
+            temporary.mkdir()
+        except FileExistsError:
+            continue
+        return temporary
+    raise PipelineError("cannot allocate a unique temporary staging directory")
 
 
 def stage_portable_tree(
@@ -2799,10 +3327,7 @@ def stage_portable_tree(
     if output_stage.exists():
         raise PipelineError(f"staging destination already exists: {output_stage}")
     output_stage.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output_stage.parent / (
-        f".{output_stage.name}.{uuid.uuid4().hex}.staging"
-    )
-    temporary.mkdir()
+    temporary = create_temporary_staging(output_stage)
     completed = False
     try:
         lock_report = validate_lock_set(locks)
@@ -2906,6 +3431,8 @@ def static_verify_staging(
     state = verify_saved_staging(stage_root)
     paths = validate_staging_paths(stage_root)
     models = verify_locked_models(locks, stage_root)
+    fonts = verify_locked_font(locks, stage_root)
+    python_runtime = verify_python_runtime_inspected_files(locks, stage_root)
     pe = validate_pe_tree(stage_root)
     manifest = validate_build_manifest(stage_root)
     if manifest.get("lock_inputs") != locks.input_hashes():
@@ -2914,6 +3441,10 @@ def static_verify_staging(
         "profile": state.get("profile"),
         "paths": paths,
         "model_count": len(models),
+        "font_count": len(fonts),
+        "python_inspected_file_count": sum(
+            len(resource["files"]) for resource in python_runtime
+        ),
         "pe_count": pe["pe_count"],
         "duplicate_dlls": pe["duplicate_dlls"],
         "load_path_pending": pe["load_path_pending"],

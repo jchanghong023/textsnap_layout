@@ -115,6 +115,45 @@ class DetectionTests(unittest.TestCase):
         self.assertEqual(merged[0].quad, _quad(1000, 100, 1350, 121))
         self.assertEqual(merged[0].source_tile_indices, (0, 1))
 
+    def _four_tile_seam_fragments(self) -> tuple[DetectionCandidate, ...]:
+        tiles = (
+            TileRegion(0, 0, 0, 1216, 400, 3840, 400),
+            TileRegion(1, 1088, 0, 1216, 400, 3840, 400),
+            TileRegion(2, 2176, 0, 1216, 400, 3840, 400),
+            TileRegion(3, 3264, 0, 576, 400, 3840, 400),
+        )
+        quads = (
+            _quad(1000, 100, 1216, 120),
+            _quad(1088, 100, 2304, 120),
+            _quad(2176, 100, 3392, 120),
+            _quad(3264, 100, 3500, 120),
+        )
+        return tuple(
+            _candidate(
+                quad,
+                score=0.8 + index * 0.01,
+                tile=tile,
+                distance=0,
+                touching=True,
+            )
+            for index, (tile, quad) in enumerate(zip(tiles, quads))
+        )
+
+    def _assert_four_tile_seam_chain(
+        self, fragments: tuple[DetectionCandidate, ...]
+    ) -> None:
+        consolidated = consolidate_candidates(fragments)
+        self.assertEqual(len(consolidated), 1)
+        self.assertEqual(consolidated[0].quad, _quad(1000, 100, 3500, 120))
+        self.assertEqual(consolidated[0].source_tile_indices, (0, 1, 2, 3))
+
+    def test_four_tile_seam_chain_merges_in_forward_order(self) -> None:
+        self._assert_four_tile_seam_chain(self._four_tile_seam_fragments())
+
+    def test_four_tile_seam_chain_merges_in_reverse_order(self) -> None:
+        fragments = self._four_tile_seam_fragments()
+        self._assert_four_tile_seam_chain(tuple(reversed(fragments)))
+
     def test_overlap_threshold_does_not_discard_one_seam_outer_edge(self) -> None:
         left = _candidate(
             _quad(1016, 100, 1216, 120),

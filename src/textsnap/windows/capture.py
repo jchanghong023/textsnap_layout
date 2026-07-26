@@ -51,11 +51,11 @@ class CaptureApi(Protocol):
 
     def get_cursor_position(self) -> tuple[int, int] | None: ...
 
-    def monitor_from_point(self, x: int, y: int) -> object | None: ...
+    def monitor_from_point(self, x: int, y: int) -> int | None: ...
 
-    def get_monitor_info(self, monitor: object) -> MonitorInfo | None: ...
+    def get_monitor_info(self, monitor: int) -> MonitorInfo | None: ...
 
-    def get_monitor_dpi(self, monitor: object) -> tuple[int, int] | None: ...
+    def get_monitor_dpi(self, monitor: int) -> tuple[int, int] | None: ...
 
     def dwm_flush(self) -> int: ...
 
@@ -282,14 +282,15 @@ class CtypesCaptureApi:
             return None
         return int(point.x), int(point.y)
 
-    def monitor_from_point(self, x: int, y: int) -> object | None:
+    def monitor_from_point(self, x: int, y: int) -> int | None:
         self._clear_error()
-        return self._monitor_from_point(
+        monitor = self._monitor_from_point(
             _POINT(x, y),
             MONITOR_DEFAULT_TO_NEAREST,
         )
+        return None if not monitor else int(monitor)
 
-    def get_monitor_info(self, monitor: object) -> MonitorInfo | None:
+    def get_monitor_info(self, monitor: int) -> MonitorInfo | None:
         info = _MONITORINFOEXW()
         info.cbSize = ctypes.sizeof(info)
         self._clear_error()
@@ -303,7 +304,7 @@ class CtypesCaptureApi:
             bottom=int(info.rcMonitor.bottom),
         )
 
-    def get_monitor_dpi(self, monitor: object) -> tuple[int, int] | None:
+    def get_monitor_dpi(self, monitor: int) -> tuple[int, int] | None:
         dpi_x = wintypes.UINT()
         dpi_y = wintypes.UINT()
         self._clear_error()
@@ -458,6 +459,12 @@ def capture_monitor_under_cursor(api: CaptureApi | None = None) -> CaptureFrame:
     )
     if monitor is None:
         raise _win32_error(selected_api, "CAPTURE-MONITOR")
+    if (
+        isinstance(monitor, bool)
+        or not isinstance(monitor, int)
+        or monitor <= 0
+    ):
+        raise CaptureError("CAPTURE-MONITOR-HANDLE-INVALID")
 
     info = _checked_call(
         selected_api,
@@ -509,6 +516,7 @@ def capture_monitor_under_cursor(api: CaptureApi | None = None) -> CaptureFrame:
         origin_y=info.top,
         dpi_x=dpi_x,
         dpi_y=dpi_y,
+        monitor_handle=monitor,
     )
 
 
@@ -602,18 +610,40 @@ def _capture_bgra(api: CaptureApi, info: MonitorInfo) -> bytes:
         pending_error = CaptureError("CAPTURE-GDI-API")
     finally:
         if bitmap_selected and memory_dc is not None and previous_object is not None:
-            cleanup_failed |= not _cleanup_call(
-                lambda: api.select_object(memory_dc, previous_object)
-            )
-        if bitmap is not None:
-            cleanup_failed |= not _cleanup_call(lambda: api.delete_object(bitmap))
-        if memory_dc is not None:
-            cleanup_failed |= not _cleanup_call(lambda: api.delete_dc(memory_dc))
-        if source_dc is not None:
-            cleanup_failed |= not _cleanup_call(
-                lambda: api.release_screen_dc(source_dc)
-            )
+            if _cleanup_call(lambda: api.select_object(memory_dc, previous_object)):
+                bitmap_selected = False
 
+        # DeleteObject fails while the bitmap is selected into the memory DC.
+        # If both restore attempts failed, destroy the DC first so the bitmap
+        # can be released without leaking its GDI handle.
+        if bitmap_selected and memory_dc is not None:
+            if _cleanup_call(lambda: api.delete_dc(memory_dc)):
+                memory_dc = None
+                bitmap_selected = False
+
+        if not bitmap_selected and bitmap is not None:
+            if _cleanup_call(lambda: api.delete_object(bitmap)):
+                bitmap = None
+        if memory_dc is not None:
+            if _cleanup_call(lambda: api.delete_dc(memory_dc)):
+                memory_dc = None
+                bitmap_selected = False
+
+        # A first DeleteObject attempt may fail even though deleting the DC
+        # subsequently made the bitmap releasable.
+        if not bitmap_selected and bitmap is not None:
+            if _cleanup_call(lambda: api.delete_object(bitmap)):
+                bitmap = None
+        if source_dc is not None:
+            if _cleanup_call(lambda: api.release_screen_dc(source_dc)):
+                source_dc = None
+
+        cleanup_failed = (
+            bitmap is not None or memory_dc is not None or source_dc is not None
+        )
+
+    if pending_error is not None and cleanup_failed:
+        raise CaptureError("CAPTURE-GDI-OPERATION-CLEANUP")
     if pending_error is not None:
         raise pending_error
     if cleanup_failed:

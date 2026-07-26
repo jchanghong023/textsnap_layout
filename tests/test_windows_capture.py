@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+from textsnap.domain import CaptureFrame
 from textsnap.windows.capture import (
     CAPTUREBLT,
     RASTER_OPERATION,
@@ -40,7 +41,11 @@ class _CaptureApi:
         self.last_error = 0
         self.bit_blt_result = True
         self.delete_object_result = True
+        self.delete_dc_result = True
+        self.restore_results: list[bool] = []
         self.selected = False
+        self.bitmap_deleted = False
+        self.monitor_handle: object | None = 0x1234
 
     def get_cursor_position(self) -> tuple[int, int] | None:
         self.calls.append("cursor")
@@ -48,7 +53,7 @@ class _CaptureApi:
 
     def monitor_from_point(self, x: int, y: int) -> object | None:
         self.calls.append(("monitor", x, y))
-        return "monitor-handle"
+        return self.monitor_handle
 
     def get_monitor_info(self, monitor: object) -> MonitorInfo | None:
         self.calls.append(("monitor-info", monitor))
@@ -84,6 +89,8 @@ class _CaptureApi:
         if gdi_object == "bitmap":
             self.selected = True
             return "stock-bitmap"
+        if self.restore_results and not self.restore_results.pop(0):
+            return None
         self.selected = False
         return "bitmap"
 
@@ -125,11 +132,16 @@ class _CaptureApi:
 
     def delete_object(self, gdi_object: object) -> bool:
         self.calls.append(("delete-object", gdi_object))
-        return self.delete_object_result
+        if self.selected or not self.delete_object_result:
+            return False
+        self.bitmap_deleted = True
+        return True
 
     def delete_dc(self, dc: object) -> bool:
         self.calls.append(("delete-dc", dc))
-        return True
+        if self.delete_dc_result:
+            self.selected = False
+        return self.delete_dc_result
 
     def release_screen_dc(self, dc: object) -> bool:
         self.calls.append(("release-screen-dc", dc))
@@ -149,7 +161,10 @@ class WindowsCaptureTests(unittest.TestCase):
         self.assertEqual((frame.origin_x, frame.origin_y), (-2, -1))
         self.assertEqual((frame.dpi_x, frame.dpi_y), (144, 144))
         self.assertEqual(frame.monitor_id, "DISPLAY-2")
+        self.assertEqual(frame.monitor_handle, 0x1234)
         self.assertEqual(frame.pixels, api.pixels)
+        self.assertIn(("monitor-info", 0x1234), api.calls)
+        self.assertIn(("dpi", 0x1234), api.calls)
         self.assertIn(
             (
                 "bitblt",
@@ -173,6 +188,44 @@ class WindowsCaptureTests(unittest.TestCase):
                 ("release-screen-dc", "screen-dc"),
             ],
         )
+
+    def test_capture_frame_monitor_handle_accepts_only_positive_non_bool_int(
+        self,
+    ) -> None:
+        fields = {
+            "pixels": object(),
+            "width": 1,
+            "height": 1,
+            "monitor_id": "DISPLAY-1",
+            "origin_x": 0,
+            "origin_y": 0,
+            "dpi_x": 96,
+            "dpi_y": 96,
+        }
+        self.assertIsNone(CaptureFrame(**fields).monitor_handle)
+        self.assertEqual(CaptureFrame(**fields, monitor_handle=1).monitor_handle, 1)
+        for invalid in (True, 0, -1, 1.5, "monitor-handle"):
+            with self.subTest(invalid=invalid):
+                with self.assertRaises(ValueError):
+                    CaptureFrame(**fields, monitor_handle=invalid)
+
+    def test_invalid_monitor_handle_fails_before_monitor_queries(self) -> None:
+        for invalid in (True, 0, -1, "monitor-handle"):
+            with self.subTest(invalid=invalid):
+                api = _CaptureApi()
+                api.monitor_handle = invalid
+
+                with self.assertRaises(CaptureError) as raised:
+                    capture_monitor_under_cursor(api)
+
+                self.assertEqual(
+                    raised.exception.diagnostic_code,
+                    "CAPTURE-MONITOR-HANDLE-INVALID",
+                )
+                self.assertEqual(
+                    api.calls,
+                    ["cursor", ("monitor", -1, 0)],
+                )
 
     def test_black_surface_ignores_alpha_and_is_rejected_after_cleanup(self) -> None:
         api = _CaptureApi()
@@ -219,6 +272,51 @@ class WindowsCaptureTests(unittest.TestCase):
             capture_monitor_under_cursor(api)
 
         self.assertEqual(raised.exception.diagnostic_code, "CAPTURE-GDI-CLEANUP")
+        self.assertIn(("delete-dc", "memory-dc"), api.calls)
+        self.assertIn(("release-screen-dc", "screen-dc"), api.calls)
+
+    def test_restore_failure_deletes_dc_before_selected_bitmap(self) -> None:
+        api = _CaptureApi()
+        api.restore_results = [False, False]
+
+        with self.assertRaises(CaptureError) as raised:
+            capture_monitor_under_cursor(api)
+
+        self.assertEqual(
+            raised.exception.diagnostic_code,
+            "CAPTURE-RESTORE-BITMAP",
+        )
+        self.assertEqual(
+            api.calls[-4:],
+            [
+                ("select", "memory-dc", "stock-bitmap"),
+                ("delete-dc", "memory-dc"),
+                ("delete-object", "bitmap"),
+                ("release-screen-dc", "screen-dc"),
+            ],
+        )
+        self.assertTrue(api.bitmap_deleted)
+
+    def test_operation_and_cleanup_failure_has_fixed_sanitized_diagnostic(
+        self,
+    ) -> None:
+        class CleanupExceptionApi(_CaptureApi):
+            def delete_object(self, gdi_object: object) -> bool:
+                self.calls.append(("delete-object", gdi_object))
+                raise RuntimeError(r"C:\Users\alice\private-capture")
+
+        api = CleanupExceptionApi()
+        api.bit_blt_result = False
+
+        with self.assertRaises(CaptureError) as raised:
+            capture_monitor_under_cursor(api)
+
+        self.assertEqual(
+            raised.exception.diagnostic_code,
+            "CAPTURE-GDI-OPERATION-CLEANUP",
+        )
+        self.assertNotIn("alice", str(raised.exception))
+        self.assertNotIn("private-capture", str(raised.exception))
         self.assertIn(("delete-dc", "memory-dc"), api.calls)
         self.assertIn(("release-screen-dc", "screen-dc"), api.calls)
 

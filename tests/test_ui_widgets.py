@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import fields
+from importlib.util import find_spec
 import os
 import unittest
+from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-try:
+if find_spec("PySide6") is None:
+    _PYSIDE_AVAILABLE = False
+    _PYSIDE_SKIP_REASON = "PySide6 6.11.1 runtime is not installed"
+else:
     from PySide6.QtCore import QPoint, QRect, Qt
     from PySide6.QtGui import QImage
     from PySide6.QtTest import QTest
@@ -18,10 +23,6 @@ try:
         QPlainTextEdit,
         QPushButton,
     )
-except (ImportError, OSError) as exc:
-    _PYSIDE_AVAILABLE = False
-    _PYSIDE_SKIP_REASON = f"PySide6 6.11.1 runtime unavailable: {exc}"
-else:
     _PYSIDE_AVAILABLE = True
     _PYSIDE_SKIP_REASON = ""
 
@@ -38,6 +39,7 @@ if _PYSIDE_AVAILABLE:
         SettingsWindow,
         TrayUi,
     )
+    from textsnap.ui.selection import _screen_geometry_for_monitor_handle
 else:
     # These names are only needed so unittest can collect and skip the classes
     # on hosts where Qt is deliberately absent.
@@ -60,7 +62,11 @@ class QtWidgetTestCase(unittest.TestCase):
 
 class SelectionOverlayTests(QtWidgetTestCase):
     @staticmethod
-    def _frame(width: int = 200, height: int = 100) -> CaptureFrame:
+    def _frame(
+        width: int = 200,
+        height: int = 100,
+        monitor_handle: int | None = None,
+    ) -> CaptureFrame:
         image = QImage(width, height, QImage.Format.Format_RGB32)
         image.fill(Qt.GlobalColor.white)
         return CaptureFrame(
@@ -72,7 +78,51 @@ class SelectionOverlayTests(QtWidgetTestCase):
             origin_y=-50,
             dpi_x=192,
             dpi_y=192,
+            monitor_handle=monitor_handle,
         )
+
+    def test_native_handle_selects_exact_mixed_dpi_geometry_ignoring_names(
+        self,
+    ) -> None:
+        class FakeScreen:
+            def __init__(self, name: str, geometry: QRect) -> None:
+                self.name = name
+                self._geometry = QRect(geometry)
+
+            def geometry(self) -> QRect:
+                return QRect(self._geometry)
+
+        primary = FakeScreen(
+            "Qt panel name, not a Win32 device",
+            QRect(0, 0, 1920, 1080),
+        )
+        high_dpi = FakeScreen(
+            "Another unrelated Qt panel name",
+            QRect(1920, -240, 1280, 720),
+        )
+        handles = {primary: 0x1111, high_dpi: 0x2222}
+
+        geometry = _screen_geometry_for_monitor_handle(
+            0x2222,
+            (primary, high_dpi),
+            handles.get,
+        )
+
+        self.assertEqual(geometry, QRect(1920, -240, 1280, 720))
+
+    def test_stale_native_monitor_handle_fails_closed(self) -> None:
+        with patch.object(
+            SelectionOverlay,
+            "_matching_qt_screen_geometry",
+            return_value=None,
+        ) as resolver:
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "captured monitor is no longer available",
+            ):
+                SelectionOverlay(self._frame(monitor_handle=0x9999))
+
+        resolver.assert_called_once_with(0x9999)
 
     def test_reverse_drag_maps_logical_to_local_and_global_physical_pixels(
         self,
@@ -529,6 +579,16 @@ class TrayUiTests(QtWidgetTestCase):
 
         tray.set_autostart_checked(False)
         self.assertEqual(len(events), 4)
+
+    def test_context_menu_can_be_hidden_synchronously_before_capture(self) -> None:
+        tray = _RecordingTray()
+        tray.menu.show()
+        self.app.processEvents()
+        self.assertTrue(tray.menu.isVisible())
+
+        tray.hide_context_menu()
+
+        self.assertFalse(tray.menu.isVisible())
 
     def test_startup_notification_interface_is_once_only_and_suppressible(self) -> None:
         tray = _RecordingTray()

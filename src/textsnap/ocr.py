@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 import hashlib
 import math
+import os
 from pathlib import Path, PurePosixPath
 import re
-from threading import Event
+from threading import Event, RLock
 from types import MappingProxyType
 from typing import Protocol
 
@@ -34,6 +36,7 @@ DETECTION_MODEL_NAME = "PP-OCRv6_small_det"
 RECOGNITION_MODEL_NAME = "PP-OCRv6_small_rec"
 RECOGNITION_BATCH_SIZE = 8
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+_MODEL_WORKING_DIRECTORY_LOCK = RLock()
 _DEFAULT_ENGINE_CONFIG = MappingProxyType(
     {
         "device_type": "cpu",
@@ -159,13 +162,31 @@ class _OpenCvImageBackend:
         if points.shape != (4, 2) or not bool(numpy.isfinite(points).all()):
             raise ValueError("invalid detection quadrilateral")
 
-        ordered = numpy.empty((4, 2), dtype=numpy.float32)
-        sums = points.sum(axis=1)
-        differences = numpy.diff(points, axis=1).reshape(-1)
-        ordered[0] = points[int(numpy.argmin(sums))]
-        ordered[2] = points[int(numpy.argmax(sums))]
-        ordered[1] = points[int(numpy.argmin(differences))]
-        ordered[3] = points[int(numpy.argmax(differences))]
+        if int(numpy.unique(points, axis=0).shape[0]) != 4:
+            raise ValueError("degenerate detection quadrilateral")
+        validation_points = points.astype(numpy.float64)
+        edges = numpy.roll(validation_points, -1, axis=0) - validation_points
+        following_edges = numpy.roll(edges, -1, axis=0)
+        cross_products = (
+            edges[:, 0] * following_edges[:, 1]
+            - edges[:, 1] * following_edges[:, 0]
+        )
+        if not (
+            bool(numpy.all(cross_products > 0))
+            or bool(numpy.all(cross_products < 0))
+        ):
+            raise ValueError("invalid detection quadrilateral")
+        following_points = numpy.roll(validation_points, -1, axis=0)
+        twice_area = float(
+            numpy.sum(
+                validation_points[:, 0] * following_points[:, 1]
+                - validation_points[:, 1] * following_points[:, 0]
+            )
+        )
+        if twice_area == 0:
+            raise ValueError("degenerate detection quadrilateral")
+
+        ordered = numpy.ascontiguousarray(points)
         top_left, top_right, bottom_right, bottom_left = ordered
 
         width = max(
@@ -178,7 +199,7 @@ class _OpenCvImageBackend:
         )
         output_width = int(round(width))
         output_height = int(round(height))
-        if output_width <= 0 or output_height <= 0:
+        if output_width < 2 or output_height < 2:
             raise ValueError("degenerate detection quadrilateral")
 
         destination = numpy.asarray(
@@ -279,6 +300,47 @@ def validate_local_model(spec: LocalModelSpec, *, expected_model_name: str) -> N
             raise _ModelValidationError
 
 
+@contextmanager
+def _paddle_model_directory_arguments(
+    detection_directory: Path,
+    recognition_directory: Path,
+) -> Iterator[tuple[str, str]]:
+    """Use ASCII relative paths for Paddle's narrow Windows file API."""
+
+    detection = detection_directory.resolve(strict=True)
+    recognition = recognition_directory.resolve(strict=True)
+    absolute_arguments = (str(detection), str(recognition))
+    if os.name != "nt" or all(argument.isascii() for argument in absolute_arguments):
+        yield absolute_arguments
+        return
+
+    try:
+        common = Path(os.path.commonpath((detection, recognition)))
+        if common in {detection, recognition}:
+            common = common.parent
+        detection_relative = detection.relative_to(common)
+        recognition_relative = recognition.relative_to(common)
+    except (OSError, ValueError):
+        raise _ModelValidationError from None
+    relative_arguments = (
+        str(detection_relative),
+        str(recognition_relative),
+    )
+    if not all(argument and argument.isascii() for argument in relative_arguments):
+        raise _ModelValidationError
+
+    # Paddle 3.2.2 passes model paths to a narrow Windows C++ file API. Keep
+    # the process-wide cwd change bounded to predictor construction and restore
+    # it before warmup or any user-triggered work.
+    with _MODEL_WORKING_DIRECTORY_LOCK:
+        previous = Path.cwd()
+        try:
+            os.chdir(common)
+            yield relative_arguments
+        finally:
+            os.chdir(previous)
+
+
 class OcrEngine:
     """Own two resident predictors and run the fixed local OCR pipeline."""
 
@@ -349,25 +411,29 @@ class OcrEngine:
                 require_offline_guard()
                 self._backend = _OpenCvImageBackend()
 
-            detector = self._factory.create_detector(
-                model_name=DETECTION_MODEL_NAME,
-                model_dir=str(self._detection_model.directory.resolve(strict=True)),
-                device="cpu",
-                engine="paddle_static",
-                engine_config=dict(self._engine_config),
-                limit_type="max",
-                limit_side_len=1216,
-                thresh=0.3,
-                box_thresh=0.5,
-                unclip_ratio=1.5,
-            )
-            recognizer = self._factory.create_recognizer(
-                model_name=RECOGNITION_MODEL_NAME,
-                model_dir=str(self._recognition_model.directory.resolve(strict=True)),
-                device="cpu",
-                engine="paddle_static",
-                engine_config=dict(self._engine_config),
-            )
+            with _paddle_model_directory_arguments(
+                self._detection_model.directory,
+                self._recognition_model.directory,
+            ) as (detection_model_dir, recognition_model_dir):
+                detector = self._factory.create_detector(
+                    model_name=DETECTION_MODEL_NAME,
+                    model_dir=detection_model_dir,
+                    device="cpu",
+                    engine="paddle_static",
+                    engine_config=dict(self._engine_config),
+                    limit_type="max",
+                    limit_side_len=1216,
+                    thresh=0.3,
+                    box_thresh=0.5,
+                    unclip_ratio=1.5,
+                )
+                recognizer = self._factory.create_recognizer(
+                    model_name=RECOGNITION_MODEL_NAME,
+                    model_dir=recognition_model_dir,
+                    device="cpu",
+                    engine="paddle_static",
+                    engine_config=dict(self._engine_config),
+                )
             warmup = self._backend.warmup_image()
             detector_results = list(
                 detector.predict(input=warmup, batch_size=1)  # type: ignore[arg-type]
@@ -472,8 +538,15 @@ class OcrEngine:
                     )
                 )
             if not spans:
+                if cancel_event is not None and cancel_event.is_set():
+                    return Cancelled()
                 return Empty()
-            return Success(build_layout(spans))
+            layout = build_layout(spans)
+            if cancel_event is not None and cancel_event.is_set():
+                return Cancelled()
+            if not layout.text.strip():
+                return Empty()
+            return Success(layout)
         except Exception:
             return _failure(
                 "OcrInferenceError",
@@ -608,10 +681,10 @@ class OcrEngine:
         pending: list[tuple[_CropRecord, int, object]] = []
 
         def flush() -> bool:
-            if not pending:
-                return True
             if cancel_event is not None and cancel_event.is_set():
                 return False
+            if not pending:
+                return True
             attempts = self._predict_recognition([job[2] for job in pending])
             if len(attempts) != len(pending):
                 raise _PredictorOutputError

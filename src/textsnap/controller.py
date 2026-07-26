@@ -26,6 +26,7 @@ from .ocr import OcrEngine
 from .paths import BundlePaths
 from .qt_instance import InstanceCommandServer
 from .qt_worker import OcrThreadController
+from .runtime_diagnostics import record_runtime_event
 from .settings import (
     Hotkey,
     Settings,
@@ -220,6 +221,9 @@ class ApplicationController(QObject):
         self._started = False
         self._shutting_down = False
         self._shutdown_complete = False
+        self._shutdown_failure: Failure | None = None
+        self._settings_open_pending = False
+        self._settings_open_scheduled = False
 
         self._connect_signals()
 
@@ -238,6 +242,10 @@ class ApplicationController(QObject):
     @property
     def active_task_id(self) -> int | None:
         return self._active_task_id
+
+    @property
+    def shutdown_failure(self) -> Failure | None:
+        return self._shutdown_failure
 
     def _connect_signals(self) -> None:
         self._tray.capture_requested.connect(self.request_capture)
@@ -260,27 +268,35 @@ class ApplicationController(QObject):
 
         if self._started:
             return
+        record_runtime_event("controller.start")
         hotkey_registered = False
         server_started = False
         try:
             self._hotkey_service.register(self._binding(self._settings.hotkey))
             hotkey_registered = True
+            record_runtime_event("controller.hotkey-ready")
             self._command_server.start()
             server_started = True
+            record_runtime_event("controller.instance-server-ready")
             if self._native_event_filter_factory is not None:
                 self._native_event_filter = self._native_event_filter_factory(
                     self._hotkey_service,
                     self.request_capture,
                 )
                 self._application.installNativeEventFilter(self._native_event_filter)
-        except Exception:
+                record_runtime_event("controller.native-filter-ready")
+        except Exception as exc:
+            record_runtime_event(
+                "controller.start-failed",
+                exception_type=type(exc).__name__,
+            )
             if server_started:
                 self._safe_call(self._command_server.close)
             if hotkey_registered:
                 self._safe_call(self._hotkey_service.unregister)
             raise ControllerStartupError("controller-resident-start") from None
 
-        self._sync_autostart_at_start()
+        autostart_sync_notice = self._sync_autostart_at_start()
         self._tray.set_autostart_checked(self._settings.autostart)
         self._settings_window.set_settings(
             self._settings.hotkey,
@@ -292,34 +308,53 @@ class ApplicationController(QObject):
             self._hotkey_text(self._settings.hotkey),
             enabled=not self._startup_autostart,
         )
+        record_runtime_event("controller.tray-ready")
         self._ocr_controller.start()
+        record_runtime_event("controller.ocr-started")
         self._started = True
+        record_runtime_event("controller.ready")
+        if autostart_sync_notice is not None:
+            self._notify(autostart_sync_notice)
         if self._settings_issue is not None:
             self._notify(self._settings_issue.public_message)
 
-    def _sync_autostart_at_start(self) -> None:
+    def _sync_autostart_at_start(self) -> str | None:
         if self._settings_issue is not None:
             # A damaged or unreadable file supplies memory-only defaults. Do
             # not project those defaults into HKCU before the user explicitly
             # saves a replacement configuration.
-            return
+            return None
         try:
             self._autostart_service.set_enabled(self._settings.autostart)
         except Exception:
-            self._notify("无法同步开机启动设置。")
+            self._autostart_requires_sync = True
+            return "无法同步开机启动设置。"
+        return None
 
     def request_capture(self) -> bool:
         """Hide application windows, flush events, and freeze the mouse monitor."""
 
+        record_runtime_event("capture.requested")
         if self._shutting_down:
+            record_runtime_event("capture.rejected", reason="shutdown")
             return False
         if self._state.request_capture() is CaptureRequest.BUSY:
+            record_runtime_event("capture.rejected", reason="busy")
             self._notify("正在识别，请等待当前任务完成。")
             return False
 
         self._previous_result_target = self._visible_result_target
         self._hide_for_capture()
         self._application.processEvents()
+        if (
+            self._shutting_down
+            or self._state.task_state is not TaskState.CAPTURING
+        ):
+            return False
+        # processEvents() can deliver queued model or local-instance signals
+        # that reopen one of our windows. Hide them again immediately before
+        # the Win32 capture; capture_monitor_under_cursor performs DwmFlush.
+        self._hide_for_capture()
         try:
             frame = self._capture_function()
             if not isinstance(frame, CaptureFrame):
@@ -330,6 +365,7 @@ class ApplicationController(QObject):
             self._capture_frame = frame
             self._selection_overlay = overlay
             overlay.show()
+            record_runtime_event("capture.overlay-visible")
             screen_getter = getattr(overlay, "screen", None)
             target_screen = screen_getter() if callable(screen_getter) else None
             if isinstance(target_screen, QRect):
@@ -340,7 +376,11 @@ class ApplicationController(QObject):
                     QRect(geometry_getter()) if callable(geometry_getter) else None
                 )
             return True
-        except Exception:
+        except Exception as exc:
+            record_runtime_event(
+                "capture.failed",
+                exception_type=type(exc).__name__,
+            )
             self._capture_frame = None
             self._selection_overlay = None
             self._state.cancel_capture()
@@ -352,9 +392,11 @@ class ApplicationController(QObject):
                     "controller-capture-failed",
                 )
             )
+            self._schedule_pending_settings_open()
             return False
 
     def _hide_for_capture(self) -> None:
+        self._tray.hide_context_menu()
         windows = [self._settings_window, self._result_window]
         if self._error_window is not None:
             windows.append(self._error_window)
@@ -366,6 +408,7 @@ class ApplicationController(QObject):
                 window.hide()
 
     def _on_selection_submitted(self, rectangle: QRect) -> None:
+        record_runtime_event("capture.selection-submitted")
         if (
             self._shutting_down
             or self._state.task_state is not TaskState.CAPTURING
@@ -386,6 +429,7 @@ class ApplicationController(QObject):
                     "controller-selection-convert",
                 )
             )
+            self._schedule_pending_settings_open()
             return
 
         self._pending_bgr = selected
@@ -395,15 +439,18 @@ class ApplicationController(QObject):
         self._set_progress_waiting(self._state.model_state is ModelState.LOADING)
         self._progress_window.show()
         self._submit_or_wait_for_model()
+        self._schedule_pending_settings_open()
 
     def _on_selection_cancelled(self) -> None:
         if self._state.task_state is not TaskState.CAPTURING:
             return
+        record_runtime_event("capture.cancelled")
         self._capture_frame = None
         self._selection_overlay = None
         self._task_result_target = None
         self._state.cancel_capture()
         self._restore_previous_result()
+        self._schedule_pending_settings_open()
 
     def _submit_or_wait_for_model(self) -> None:
         if (
@@ -452,6 +499,7 @@ class ApplicationController(QObject):
             return
         self._active_task_id = task_id
         self._pending_bgr = None
+        record_runtime_event("controller.task-submitted", task_id=task_id)
 
     def cancel_current_task(self) -> bool:
         if self._state.task_state is TaskState.CAPTURING:
@@ -539,6 +587,10 @@ class ApplicationController(QObject):
     def _finish_outcome(self, outcome: TaskOutcome) -> None:
         if self._state.task_state is not TaskState.RECOGNIZING:
             return
+        record_runtime_event(
+            "controller.task-finished",
+            outcome_type=type(outcome).__name__,
+        )
         previous_visible_result = self._state.visible_result
         previous_result_target = self._previous_result_target
         visible = self._state.finish_task(outcome)
@@ -612,7 +664,10 @@ class ApplicationController(QObject):
         self._previous_result_target = None
 
     def show_settings(self) -> None:
-        if self._shutting_down:
+        if (
+            self._shutting_down
+            or self._state.task_state is TaskState.CAPTURING
+        ):
             return
         self._settings_window.set_settings(
             self._settings.hotkey,
@@ -625,7 +680,35 @@ class ApplicationController(QObject):
 
     def _on_instance_command(self, command: str) -> None:
         if command == "open-settings":
+            if self._shutting_down:
+                return
+            if self._state.task_state is TaskState.CAPTURING:
+                self._settings_open_pending = True
+                return
             self.show_settings()
+
+    def _schedule_pending_settings_open(self) -> None:
+        if (
+            not self._settings_open_pending
+            or self._settings_open_scheduled
+            or self._shutting_down
+            or self._state.task_state is TaskState.CAPTURING
+        ):
+            return
+        self._settings_open_scheduled = True
+        QTimer.singleShot(0, self._open_pending_settings)
+
+    def _open_pending_settings(self) -> None:
+        self._settings_open_scheduled = False
+        if self._shutting_down:
+            self._settings_open_pending = False
+            return
+        if self._state.task_state is TaskState.CAPTURING:
+            return
+        if not self._settings_open_pending:
+            return
+        self._settings_open_pending = False
+        self.show_settings()
 
     def apply_settings_draft(self, draft: object) -> bool:
         if not isinstance(draft, SettingsDraft):
@@ -771,7 +854,9 @@ class ApplicationController(QObject):
 
         if self._shutting_down:
             return
+        record_runtime_event("controller.shutdown-requested")
         self._shutting_down = True
+        self._settings_open_pending = False
         self._state.request_exit()
         if self._state.task_state is TaskState.CAPTURING:
             overlay = self._selection_overlay
@@ -803,14 +888,28 @@ class ApplicationController(QObject):
             force = bool(self._force_exit_prompt())
         except Exception:
             force = False
+        if not self._shutting_down or self._shutdown_complete:
+            return
         if force:
             self._force_exit(1)
             return
         self._shutdown_timer.start(10_000)
 
-    def _on_shutdown_finished(self, _failure_result: object) -> None:
+    def _on_shutdown_finished(self, failure_result: object) -> None:
         if self._shutdown_complete:
             return
+        if failure_result is not None:
+            if not isinstance(failure_result, Failure):
+                failure_result = _failure(
+                    "OcrShutdownError",
+                    "OCR 引擎未能安全退出。",
+                    "controller-shutdown-result",
+                )
+            self._shutdown_failure = failure_result
+        record_runtime_event(
+            "controller.shutdown-finished",
+            success=failure_result is None,
+        )
         self._shutdown_complete = True
         self._shutdown_timer.stop()
         self._pending_bgr = None
@@ -839,9 +938,30 @@ class ApplicationController(QObject):
         if not callable(waiter):
             return False
         try:
-            return bool(waiter())
+            stopped_cleanly = bool(waiter())
         except Exception:
             return False
+        try:
+            worker_failure = getattr(
+                self._ocr_controller,
+                "shutdown_failure",
+                None,
+            )
+        except Exception:
+            worker_failure = _failure(
+                "OcrShutdownError",
+                "OCR 引擎未能安全退出。",
+                "controller-shutdown-inspect",
+            )
+        if worker_failure is not None:
+            if not isinstance(worker_failure, Failure):
+                worker_failure = _failure(
+                    "OcrShutdownError",
+                    "OCR 引擎未能安全退出。",
+                    "controller-shutdown-contract",
+                )
+            self._shutdown_failure = worker_failure
+        return stopped_cleanly and self._shutdown_failure is None
 
     def _default_force_exit_prompt(self) -> bool:
         answer = QMessageBox.question(

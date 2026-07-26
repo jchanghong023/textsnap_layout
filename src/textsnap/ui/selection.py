@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from math import floor
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,7 @@ from PySide6.QtGui import (
     QImage,
     QKeyEvent,
     QMouseEvent,
+    QNativeInterface,
     QPaintEvent,
     QPainter,
     QPen,
@@ -25,6 +27,73 @@ if TYPE_CHECKING:
 
 _BASE_DPI = 96
 _MIN_PHYSICAL_SELECTION = 8
+
+
+def _screen_geometry_for_monitor_handle(
+    monitor_handle: int,
+    screens: Iterable[object],
+    handle_getter: Callable[[object], int | None],
+) -> QRect | None:
+    """Return the sole Qt screen geometry matching an opaque HMONITOR."""
+
+    if (
+        isinstance(monitor_handle, bool)
+        or not isinstance(monitor_handle, int)
+        or monitor_handle <= 0
+    ):
+        raise ValueError("monitor_handle must be a positive integer")
+
+    matched_geometry: QRect | None = None
+    match_count = 0
+    for screen in screens:
+        candidate = handle_getter(screen)
+        if (
+            isinstance(candidate, bool)
+            or not isinstance(candidate, int)
+            or candidate <= 0
+            or candidate != monitor_handle
+        ):
+            continue
+        match_count += 1
+        if match_count > 1:
+            return None
+        geometry_getter = getattr(screen, "geometry", None)
+        if not callable(geometry_getter):
+            return None
+        try:
+            geometry = QRect(geometry_getter())
+        except (TypeError, RuntimeError):
+            return None
+        if geometry.width() <= 0 or geometry.height() <= 0:
+            return None
+        matched_geometry = geometry
+    return matched_geometry if match_count == 1 else None
+
+
+def _qt_native_monitor_handle(screen: object) -> int | None:
+    """Read a QScreen's Windows HMONITOR without taking ownership of it."""
+
+    windows_screen_type = getattr(QNativeInterface, "QWindowsScreen", None)
+    native_interface_getter = getattr(screen, "nativeInterface", None)
+    if windows_screen_type is None or not callable(native_interface_getter):
+        return None
+    try:
+        native_interface = native_interface_getter()
+    except (TypeError, RuntimeError):
+        return None
+    if not isinstance(native_interface, windows_screen_type):
+        return None
+    try:
+        monitor_handle = native_interface.handle()
+    except (AttributeError, TypeError, RuntimeError):
+        return None
+    if (
+        isinstance(monitor_handle, bool)
+        or not isinstance(monitor_handle, int)
+        or monitor_handle <= 0
+    ):
+        return None
+    return monitor_handle
 
 
 class SelectionOverlay(QWidget):
@@ -85,10 +154,11 @@ class SelectionOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_OpaquePaintEvent, True)
 
         geometry = logical_geometry if logical_geometry is not None else screen_geometry
-        if geometry is None:
-            geometry = self._matching_qt_screen_geometry(
-                getattr(image_or_frame, "monitor_id", None)
-            )
+        monitor_handle = getattr(image_or_frame, "monitor_handle", None)
+        if geometry is None and monitor_handle is not None:
+            geometry = self._matching_qt_screen_geometry(monitor_handle)
+            if geometry is None:
+                raise RuntimeError("captured monitor is no longer available")
         if geometry is not None:
             if geometry.width() <= 0 or geometry.height() <= 0:
                 raise ValueError("overlay geometry must be non-empty")
@@ -109,19 +179,17 @@ class SelectionOverlay(QWidget):
             self.setGeometry(logical_x, logical_y, logical_width, logical_height)
 
     @staticmethod
-    def _matching_qt_screen_geometry(monitor_id: object) -> QRect | None:
-        """Resolve Win32 ``szDevice`` to Qt's mixed-DPI virtual geometry."""
+    def _matching_qt_screen_geometry(monitor_handle: int) -> QRect | None:
+        """Resolve an HMONITOR to Qt's mixed-DPI virtual geometry."""
 
-        if not isinstance(monitor_id, str) or not monitor_id:
-            return None
         application = QGuiApplication.instance()
         if application is None:
             return None
-        wanted = monitor_id.casefold()
-        for screen in application.screens():
-            if screen.name().casefold() == wanted:
-                return QRect(screen.geometry())
-        return None
+        return _screen_geometry_for_monitor_handle(
+            monitor_handle,
+            application.screens(),
+            _qt_native_monitor_handle,
+        )
 
     @staticmethod
     def _unpack_image(

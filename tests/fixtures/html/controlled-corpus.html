@@ -56,19 +56,19 @@
 <body>
   <main>
     <h1>TextSnap Layout 固定测试页</h1>
-    <p>中文文档：截图只在内存中处理，不上传，不写入识别历史。</p>
+    <p>CN-DOC | 中文文档：截图只在内存中处理，不上传，不写入识别历史。</p>
     <p>English web sample: deterministic text keeps punctuation, 12345, and symbols +-=.</p>
     <p class="mixed">中英混排 Mixed-文本：CPU / AVX2 / MKL-DNN；版本 v0.1.0。</p>
 
-    <h2>代码与缩进</h2>
+    <h2>CODE-HEADING | 代码与缩进</h2>
     <pre>def layout(spans):
     if not spans:
-        return ""
+        return ""  # EMPTY-RETURN
     return "left" + "    " + "right"  # keep spaces</pre>
 
     <p class="mixed">LONG-LINE | alpha beta gamma delta epsilon | 0123456789 | 中文长行不得在瓦片接缝重复或截断 | END-LONG-LINE</p>
 
-    <h2>双栏锚点</h2>
+    <h2>COLUMN-HEADING | 双栏锚点</h2>
     <div class="columns">
       <section>
         <p>LEFT-COLUMN-A 左栏第一行</p>

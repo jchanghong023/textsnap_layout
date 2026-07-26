@@ -81,7 +81,12 @@ class TileRegion:
 
 @dataclass(frozen=True, slots=True)
 class CaptureFrame:
-    """An in-memory monitor capture in Windows physical-pixel coordinates."""
+    """An in-memory monitor capture in Windows physical-pixel coordinates.
+
+    ``monitor_handle`` is an opaque, process-local HMONITOR value. It is only
+    used synchronously to associate the capture with Qt's native screen and
+    must not be persisted or closed by the application.
+    """
 
     pixels: object = field(repr=False, compare=False)
     width: int
@@ -91,6 +96,7 @@ class CaptureFrame:
     origin_y: int
     dpi_x: int
     dpi_y: int
+    monitor_handle: int | None = None
 
     def __post_init__(self) -> None:
         if self.width <= 0 or self.height <= 0:
@@ -99,6 +105,12 @@ class CaptureFrame:
             raise ValueError("monitor_id must not be empty")
         if self.dpi_x <= 0 or self.dpi_y <= 0:
             raise ValueError("DPI must be positive")
+        if self.monitor_handle is not None and (
+            isinstance(self.monitor_handle, bool)
+            or not isinstance(self.monitor_handle, int)
+            or self.monitor_handle <= 0
+        ):
+            raise ValueError("monitor_handle must be a positive integer or None")
 
 
 @dataclass(frozen=True, slots=True)

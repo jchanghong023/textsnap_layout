@@ -146,16 +146,27 @@ def _estimate_row_step(lines: list[_TextLine], body_height: float) -> float:
 def _render_line(line: _TextLine, left_origin: float, grid_width: float) -> str:
     pieces: list[str] = []
     cursor = 0
+    occupied_right: float | None = None
     for item in line.items:
         target_column = _round_nonnegative_half_up(
             max(0.0, (item.left - left_origin) / grid_width)
         )
+        if occupied_right is not None:
+            gap_columns = _round_nonnegative_half_up(
+                max(0.0, item.left - occupied_right) / grid_width
+            )
+            target_column = max(target_column, cursor + gap_columns)
         target_column = max(target_column, cursor)
         if target_column > cursor:
             pieces.append(" " * (target_column - cursor))
             cursor = target_column
         pieces.append(item.text)
         cursor += display_cell_width(item.text)
+        occupied_right = (
+            item.right
+            if occupied_right is None
+            else max(occupied_right, item.right)
+        )
     return "".join(pieces).rstrip(" ")
 
 
