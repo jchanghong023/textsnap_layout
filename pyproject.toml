@@ -21,6 +21,6 @@ addopts = "-ra"
 testpaths = ["tests"]
 pythonpath = ["src"]
 markers = [
-  "integration: requires pinned Paddle runtime and local OCR models",
+  "integration: requires pinned ONNX Runtime/PaddleOCR stack and local OCR models",
   "windows: requires a Windows 11 x64 host",
 ]

@@ -1,4 +1,4 @@
-"""Local PaddleOCR det/rec orchestration with dependency-free import."""
+"""Local PaddleOCR preprocessing with ONNX Runtime CPU det/rec inference."""
 
 from __future__ import annotations
 
@@ -7,10 +7,9 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 import hashlib
 import math
-import os
 from pathlib import Path, PurePosixPath
 import re
-from threading import Event, RLock
+from threading import Event
 from types import MappingProxyType
 from typing import Protocol
 
@@ -42,17 +41,17 @@ WIDE_TEXT_MIN_ASPECT_RATIO = 12.0
 WIDE_TEXT_HORIZONTAL_SCALE_FACTOR = 1.5
 CODE_STRETCH_SCORE_TOLERANCE = 0.02
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
-_MODEL_WORKING_DIRECTORY_LOCK = RLock()
 _DEFAULT_ENGINE_CONFIG = MappingProxyType(
     {
         "device_type": "cpu",
-        "run_mode": "mkldnn",
-        "cpu_threads": 10,
-        "mkldnn_cache_capacity": 10,
-        # The locked Paddle 3.2.2 runtime does not require the new-IR path.
-        # Disable it explicitly on every platform to keep inference behavior
-        # identical to the validated Windows CPU configuration.
-        "enable_new_ir": False,
+        "providers": ("CPUExecutionProvider",),
+        "graph_optimization_level": 99,
+        "intra_op_num_threads": 10,
+        "inter_op_num_threads": 1,
+        "execution_mode": "sequential",
+        "log_severity_level": 3,
+        "enable_mem_pattern": True,
+        "enable_cpu_mem_arena": True,
     }
 )
 
@@ -336,10 +335,8 @@ def validate_local_model(spec: LocalModelSpec, *, expected_model_name: str) -> N
         raise _ModelValidationError
 
     locked_names = set(spec.files_sha256)
-    required = {"inference.yml", "inference.pdiparams"}
-    if not required.issubset(locked_names) or not (
-        {"inference.json", "inference.pdmodel"} & locked_names
-    ):
+    required = {"inference.yml", "inference.onnx"}
+    if not required.issubset(locked_names):
         raise _ModelValidationError
 
     for relative_name, expected_digest in spec.files_sha256.items():
@@ -362,44 +359,15 @@ def validate_local_model(spec: LocalModelSpec, *, expected_model_name: str) -> N
 
 
 @contextmanager
-def _paddle_model_directory_arguments(
+def _model_directory_arguments(
     detection_directory: Path,
     recognition_directory: Path,
 ) -> Iterator[tuple[str, str]]:
-    """Use ASCII relative paths for Paddle's narrow Windows file API."""
+    """Return absolute Unicode-safe paths accepted by ONNX Runtime."""
 
     detection = detection_directory.resolve(strict=True)
     recognition = recognition_directory.resolve(strict=True)
-    absolute_arguments = (str(detection), str(recognition))
-    if os.name != "nt" or all(argument.isascii() for argument in absolute_arguments):
-        yield absolute_arguments
-        return
-
-    try:
-        common = Path(os.path.commonpath((detection, recognition)))
-        if common in {detection, recognition}:
-            common = common.parent
-        detection_relative = detection.relative_to(common)
-        recognition_relative = recognition.relative_to(common)
-    except (OSError, ValueError):
-        raise _ModelValidationError from None
-    relative_arguments = (
-        str(detection_relative),
-        str(recognition_relative),
-    )
-    if not all(argument and argument.isascii() for argument in relative_arguments):
-        raise _ModelValidationError
-
-    # Paddle 3.2.2 passes model paths to a narrow Windows C++ file API. Keep
-    # the process-wide cwd change bounded to predictor construction and restore
-    # it before warmup or any user-triggered work.
-    with _MODEL_WORKING_DIRECTORY_LOCK:
-        previous = Path.cwd()
-        try:
-            os.chdir(common)
-            yield relative_arguments
-        finally:
-            os.chdir(previous)
+    yield str(detection), str(recognition)
 
 
 class OcrEngine:
@@ -423,8 +391,9 @@ class OcrEngine:
             config.update(engine_config)
         if config.get("device_type") != "cpu":
             raise ValueError("only the CPU inference device is supported")
-        if not isinstance(config.get("cpu_threads"), int) or config["cpu_threads"] <= 0:
-            raise ValueError("cpu_threads must be a positive integer")
+        thread_count = config.get("intra_op_num_threads")
+        if not isinstance(thread_count, int) or thread_count <= 0:
+            raise ValueError("intra_op_num_threads must be a positive integer")
         self._engine_config = MappingProxyType(config)
         self._detector: Predictor | None = None
         self._recognizer: Predictor | None = None
@@ -472,7 +441,7 @@ class OcrEngine:
                 require_offline_guard()
                 self._backend = _OpenCvImageBackend()
 
-            with _paddle_model_directory_arguments(
+            with _model_directory_arguments(
                 self._detection_model.directory,
                 self._recognition_model.directory,
             ) as (detection_model_dir, recognition_model_dir):
@@ -480,7 +449,7 @@ class OcrEngine:
                     model_name=DETECTION_MODEL_NAME,
                     model_dir=detection_model_dir,
                     device="cpu",
-                    engine="paddle_static",
+                    engine="onnxruntime",
                     engine_config=dict(self._engine_config),
                     limit_type="max",
                     limit_side_len=1216,
@@ -492,7 +461,7 @@ class OcrEngine:
                     model_name=RECOGNITION_MODEL_NAME,
                     model_dir=recognition_model_dir,
                     device="cpu",
-                    engine="paddle_static",
+                    engine="onnxruntime",
                     engine_config=dict(self._engine_config),
                 )
             warmup = self._backend.warmup_image()

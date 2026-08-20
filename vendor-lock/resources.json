@@ -5,12 +5,32 @@
       "os": "windows",
       "architecture": "x86_64",
       "python_version": "3.13.14"
-    },
-    "integration": {
-      "os": "linux",
-      "architecture": "aarch64",
-      "python_version": "3.12"
     }
+  },
+  "derived_models": {
+    "format": "onnx",
+    "opset_version": 11,
+    "converter": {
+      "paddle2onnx": "2.1.0",
+      "paddlepaddle": "3.0.0.dev20250426",
+      "reproducibility": "each source model was converted twice with identical SHA-256 output on Windows x64"
+    },
+    "files": [
+      {
+        "model_name": "PP-OCRv6_small_det",
+        "source_path": "PP-OCRv6_small_det/inference.onnx",
+        "destination_path": "models/PP-OCRv6_small_det/inference.onnx",
+        "size": 9891707,
+        "sha256": "3914f972d833af87d23bb2338bd09238f978a48f3c4dbb8e1a4ee26a93869940"
+      },
+      {
+        "model_name": "PP-OCRv6_small_rec",
+        "source_path": "PP-OCRv6_small_rec/inference.onnx",
+        "destination_path": "models/PP-OCRv6_small_rec/inference.onnx",
+        "size": 21148338,
+        "sha256": "3e3def686ac9a1676b59bc9749ad896263d8f68b53f352060774de359a2e23ed"
+      }
+    ]
   },
   "artifacts": [
     {
@@ -172,30 +192,6 @@
       "verification": {
         "status": "verified",
         "method": "GitHub release asset downloaded; archive and selected OTF hashed",
-        "verified_at": "2026-07-25"
-      }
-    },
-    {
-      "id": "paddlepaddle-3.2.2-cp312-linux-aarch64-integration",
-      "kind": "integration_test_wheel",
-      "version": "3.2.2",
-      "filename": "paddlepaddle-3.2.2-cp312-cp312-linux_aarch64.whl",
-      "url": "https://paddle-whl.bj.bcebos.com/stable/cpu/paddlepaddle/paddlepaddle-3.2.2-cp312-cp312-linux_aarch64.whl",
-      "size": 88147129,
-      "sha256": "a59d9020ba160fa7f5aefcb30e4a6329390a635d1a0b511f6458139376c03f99",
-      "wheel_tags": [
-        "cp312-cp312-linux_aarch64"
-      ],
-      "target": {
-        "os": "linux",
-        "architecture": "aarch64",
-        "python_version": "3.12",
-        "usage": "integration_tests_only",
-        "include_in_windows_zip": false
-      },
-      "verification": {
-        "status": "verified",
-        "method": "downloaded from the official Paddle CPU wheel index; size, SHA-256, name/version and WHEEL tag inspected",
         "verified_at": "2026-07-25"
       }
     }

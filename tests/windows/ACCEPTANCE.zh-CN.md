@@ -1,17 +1,17 @@
 # Windows 11 x64 实机验收
 
-本清单只能在目标 Windows 11 x64 实机上签署。ARM64 Linux 上的单元测试、
-真实 OCR 冒烟测试和 PE 静态检查不能替代这里的结果。
+本清单只能在目标 Windows 11 x86-64（x64）、Intel Core i7-13700 实机上签署；项目不支持
+Linux、Windows ARM64 或其他 ARM 环境。
 
 ## 前置条件
 
 - 使用发布门禁通过后生成的 `TextSnapLayout-0.1.0-win-x64.zip`，先核对同名
   `.sha256`。
-- 测试机为 Intel i7-13700，未安装供本应用使用的系统 Python；断开网络。
+- 测试机为 Intel Core i7-13700，未安装供本应用使用的系统 Python；断开网络。
 - 分别解压到普通路径、含空格路径和含中文字符路径。不要在 ZIP 内直接运行。
 - 打开任务管理器、资源监视器和注册表编辑器，准备记录时间与内存数据。
 - 保存发布门禁产生的 `TEXTSNAP_REAL_OCR_RECORD`。该门禁必须使用清单锁定版本的
-  Pillow、NumPy、OpenCV、PaddlePaddle、PaddleOCR、PaddleX 和锁定字体，在进程
+  Pillow、NumPy、OpenCV、ONNX Runtime、PaddlePaddle、PaddleOCR、PaddleX 和锁定字体，在进程
   内从受控语料生成 1920×1080 与 3840×2160 像素图；任何 `skipped` 结果都不算
   通过。
 - 在浏览器中打开 `tests/fixtures/html/controlled-corpus.html`，按清单要求设置
@@ -44,7 +44,8 @@
    重复或截断。另核对内部空格、代码缩进、栏距、空行、无多余尾随空格和无额外
    结尾换行。
 8. 测试局部复制、`Ctrl+C`、`Ctrl+A` 和“复制全部”；缩放结果窗口不得产生
-   真实换行，复制后窗口不得自动关闭。
+   真实换行；点击“复制全部”后窗口必须自动关闭，局部复制和 `Ctrl+C` 后窗口保持
+   打开。
 9. 已有结果存在时，分别触发截图取消、空结果、OCR 失败和识别中取消；旧结果
    必须恢复。只有成功结果可以替换旧结果。
 10. 识别中退出，确认先请求取消；10 秒内不得提供强制退出，超过 10 秒后才允许

@@ -12,13 +12,11 @@ from .ocr import (
 )
 
 DETECTION_MODEL_HASHES = {
-    "inference.json": "89240f689a4a77aad75ef55a8df0a15c8e1d4980a327d17e58f24bbadde5aeab",
-    "inference.pdiparams": "5043d4ccc8d63402ccea8feefcee4db57077431a873e78d2191836a178a492da",
+    "inference.onnx": "3914f972d833af87d23bb2338bd09238f978a48f3c4dbb8e1a4ee26a93869940",
     "inference.yml": "193f435274bf9f0b5f71a929bbfbcf148282df7e633b34e7c373e8f44741b516",
 }
 RECOGNITION_MODEL_HASHES = {
-    "inference.json": "f0bf53c853937a917affdd74467472167727f8ab0f0f7bded01c4a16c27e46e6",
-    "inference.pdiparams": "406e1e689c9a7fbb04178007a3fe10cf852afe7bf8bb3bc6dbb9d532b13bd907",
+    "inference.onnx": "3e3def686ac9a1676b59bc9749ad896263d8f68b53f352060774de359a2e23ed",
     "inference.yml": "ab078671bb49f06228eadccd34f1bb501e157f7a047095ffb943ba81512c77d1",
 }
 

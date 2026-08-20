@@ -70,8 +70,15 @@ def _stage_arguments(parser: argparse.ArgumentParser) -> None:
         default=REPOSITORY_ROOT / "native",
     )
     parser.add_argument(
+        "--onnx-model-root",
+        type=Path,
+        default=REPOSITORY_ROOT / "vendor-models",
+        help="root containing the Git LFS tracked deterministic ONNX models",
+    )
+    parser.add_argument(
         "--toolchain-prefix",
-        default="x86_64-w64-mingw32-",
+        default="",
+        help="native Windows MinGW executable prefix (default: none)",
     )
     parser.add_argument(
         "--profile",
@@ -90,6 +97,7 @@ def _stage_from_arguments(arguments: argparse.Namespace) -> dict[str, Any]:
         readme=arguments.readme.resolve() if arguments.readme else None,
         python_for_bytecode=arguments.python_for_bytecode.resolve(),
         native_source=arguments.native_source.resolve(),
+        onnx_model_root=arguments.onnx_model_root.resolve(),
         toolchain_prefix=arguments.toolchain_prefix,
         profile=arguments.profile,
     )

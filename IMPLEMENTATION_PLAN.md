@@ -2,10 +2,13 @@
 
 ## 1. 目标与交付边界
 
-- 在 ARM64 Linux 开发机上构建 `TextSnapLayout-0.1.0-win-x64.zip`。
+- 在 Windows 11 x86-64（x64）、Intel Core i7-13700 开发机上原生构建
+  `TextSnapLayout-0.1.0-win-x64.zip`；不支持 Linux、Windows ARM64 或其他 ARM
+  主机。
 - 解压后双击根目录 `TextSnapLayout.exe` 即可运行，无需安装 Python、Paddle、VC++ 运行库或联网下载模型。
-- 首版只保证 Windows 11 x64、Intel i7-13700、CPU/AVX2/MKL 环境。
-- 使用原始 `PP-OCRv6_small_det` 与 `PP-OCRv6_small_rec`，不增加方向分类、版面分析或语言模型。PP-OCRv6 small 统一支持中文、英文、日文及拉丁语种，官方也提供 Windows x64 CPU 推理支持。([PP-OCRv6 说明](https://www.paddleocr.ai/latest/en/version3.x/algorithm/PP-OCRv6/PP-OCRv6.html)，[Windows CPU 安装说明](https://www.paddlepaddle.org.cn/documentation/docs/zh/install/pip/windows-pip_en.html))
+- 首版只保证 Windows 11 x86-64（x64）、Intel Core i7-13700、CPU/AVX2
+  环境。
+- 使用 `PP-OCRv6_small_det` 与 `PP-OCRv6_small_rec` 的确定性 FP32 ONNX 转换产物，不改变模型权重，不增加方向分类、版面分析或语言模型。PP-OCRv6 small 统一支持中文、英文、日文及拉丁语种。([PP-OCRv6 说明](https://www.paddleocr.ai/latest/en/version3.x/algorithm/PP-OCRv6/PP-OCRv6.html))
 - 运行时完全离线：无上传、更新检查、模型下载、遥测、截图文件、OCR 历史或运行日志。
 - 交付无数字签名，附 ZIP 的 SHA-256；接受首次运行出现 SmartScreen“未知发布者”提示。
 
@@ -19,6 +22,7 @@
 - PaddlePaddle CPU 3.2.2。
 - PaddleOCR 3.7.0。
 - PaddleX 3.7.2，仅安装 `ocr-core` 所需依赖。
+- ONNX Runtime CPU 1.28.0，固定 `CPUExecutionProvider`，检测和识别均不使用 GPU。
 - PySide6 Essentials 6.11.1，不携带 Qt Addons。
 - OpenCV Contrib 4.10.0.84、NumPy 2.2.6。
 - Noto Sans Mono CJK SC Regular，固定 `Sans2.004` 静态 OTF；ASCII 半宽、CJK 全宽。([字体发布页](https://github.com/notofonts/noto-cjk/releases))
@@ -26,7 +30,7 @@
 版本兼容性决定（2026-07-25）：
 
 - 原草案固定的 NumPy 1.26.4 没有 CPython 3.13 的 Windows x64 wheel，不能装入 CPython 3.13.14 嵌入运行时。目标锁必须使用 `numpy-2.2.6-cp313-cp313-win_amd64.whl`，不得让解析器自动选择其他版本。NumPy 2.2.6 同时满足 PaddlePaddle 3.2.2 的 `numpy>=1.21`、PaddleX 3.7.2 的 `numpy>=1.24,<2.4` 和 OpenCV Contrib 4.10.0.84 在 Python 3.12 及以上的 `numpy>=1.26.0` 约束。该结论已完成 wheel 元数据和目标标签检查；原生导入及 OCR 运行仍须按第 5 节验证。([NumPy 1.26.4 文件列表](https://pypi.org/project/numpy/1.26.4/)，[NumPy 2.2.6 文件列表](https://pypi.org/project/numpy/2.2.6/))
-- Windows 11 x64 实测中，PaddlePaddle 3.3.1 在 oneDNN 检测器预热阶段触发原生属性转换错误；相同依赖、参数和模型切换到 3.2.2 后可完成预热与推理。因此目标锁固定为 3.2.2，不得自动升级。
+- PaddlePaddle 3.2.2 继续作为锁定的 PaddleOCR/PaddleX 依赖，但检测和识别推理由 ONNX Runtime CPU 执行，不再使用 Paddle 静态图/oneDNN 引擎。
 - 同一台 Windows 11 x64、相同截图和推理参数下，PP-OCRv6 small 将 1280×720 识别中位耗时从 14.866 秒降到 1.066 秒，将 4K 密集截图从 92.305 秒降到 8.869 秒。官方精度指标相较 medium 有约 2 个百分点的取舍；用户于 2026-07-25 明确选择将检测和识别模型全部改为 small。
 应用采用单进程 PySide6。模型在专用 `QThread` 中创建、预热并常驻，主线程只处理热键、截图和窗口事件；同时只允许一个 OCR 任务。
 
@@ -80,7 +84,7 @@
 ### 3.2 OCR 管线
 
 - 启动时验证两个本地模型目录及 SHA-256；缺失或损坏时直接失败，绝不调用远程模型解析。
-- 使用 PaddleOCR 的 `TextDetection`、`TextRecognition` 本地模块，显式指定 CPU、MKL-DNN、10 个推理线程和本地模型目录。
+- 使用 PaddleOCR 的 `TextDetection`、`TextRecognition` 本地模块完成既有预处理与后处理，显式指定 ONNX Runtime、`CPUExecutionProvider`、10 个算子内线程、顺序执行和本地模型目录。
 - 文档方向、去畸变、文字方向分类全部关闭，只运行指定 det/rec。
 - 小选区单次检测；任一边超过 1216 像素时，按 1216×1216、128 像素重叠生成瓦片，保证末端瓦片覆盖图像边界。
 - 检测初始参数固定为：
@@ -97,7 +101,7 @@
 - 正常横排识别一次；高宽比超过 1.3 的疑似竖排框额外尝试 90°/270°；普通框首次分数低于 0.5 时尝试 180°，取最高置信结果。
 - `text_rec_score_thresh=0.0`：仅丢弃空字符串，不因低置信度静默漏掉小字或代码符号。
 - 不做拼写纠正、繁简转换、语言模型补全或字符替换。
-- OCR 期间只显示“正在识别…”和取消按钮，`Esc` 同样取消。取消在当前不可中断的 Paddle 调用结束后，于瓦片或识别批次检查点生效。
+- OCR 期间只显示“正在识别…”和取消按钮，`Esc` 同样取消。取消在当前不可中断的 ONNX Runtime 调用结束后，于瓦片或识别批次检查点生效。
 - 识别中再次按热键只提示“正在识别”，不排队、不取消当前任务。
 - 退出程序时先请求取消；等待当前推理调用安全返回。超过 10 秒后才提供显式“强制退出”。
 
@@ -120,7 +124,7 @@
 
 - 结果窗在截图所在显示器工作区居中，初始宽高均为工作区约 80%，弹出时激活但不永久置顶。
 - 使用只读 `QPlainTextEdit`、Noto Sans Mono CJK SC 12pt、`NoWrap`，水平和垂直滚动条按需显示。
-- 支持标准鼠标选择、右键复制、`Ctrl+C`、`Ctrl+A`，并提供“复制全部”按钮；复制后不自动关闭。
+- 支持标准鼠标选择、右键复制、`Ctrl+C`、`Ctrl+A`，并提供“复制全部”按钮；点击“复制全部”后自动关闭结果窗口，局部复制和 `Ctrl+C` 不自动关闭。
 - “复制全部”复制布局模块生成的原文，不二次格式化。
 - 关闭结果窗时清空控件和内存引用；剪贴板内容由 Windows 管理，不自动清除。
 - 空结果、截图失败或 OCR 失败只显示简短提示，不打开空白窗口、不覆盖旧结果。
@@ -136,7 +140,7 @@
 - 截图只以 `QImage`/NumPy 数组存在，绝不传给临时文件 API；布局完成或任务终止后释放所有引用。
 - 不声称对 Python/原生库的已释放内存执行安全擦除；保证范围是“不上传、不主动持久化”。
 
-## 4. Linux 构建、打包与实施顺序
+## 4. Windows x64 构建、打包与实施顺序
 
 ### 4.1 代码组织
 
@@ -150,9 +154,9 @@
 
 ### 4.2 构建流程
 
-1. 在 ARM64 Linux 安装 x86_64 MinGW 交叉工具链；编译 `TextSnapLayout.exe` 为 PE32+ x86-64 GUI subsystem，使用宽字符 API 定位自身目录并启动 `runtime/pythonw.exe -I -B app/main.py`。
-2. 下载并校验固定的 CPython embeddable package、Windows wheels、两个模型和字体。
-3. 通过完整的 win-x64 wheel lock，以 `--no-deps` 方式安装到 staging，避免在 ARM Linux 上错误解析平台条件。
+1. 在 Windows 11 x64、Intel i7-13700 主机安装 x86_64 MinGW 工具链；原生编译 `TextSnapLayout.exe` 为 PE32+ x86-64 GUI subsystem，使用宽字符 API 定位自身目录并启动 `runtime/pythonw.exe -I -B app/main.py`。
+2. 下载并校验固定的 CPython embeddable package、Windows wheels、两个 Paddle 源模型和字体；从 Git LFS 工作区校验并装入两套确定性 ONNX 模型。
+3. 通过完整的 win-x64 wheel lock，以 `--no-deps` 方式安装到 staging，拒绝任何非 Windows x64 平台产物。
 4. 只保留 Qt Widgets 所需模块、`qwindows` 平台插件、必要图像插件和样式；不删除 Paddle/PaddleOCR 运行所需文件。
 5. 配置 `python313._pth`，只允许包内标准库、`site-packages` 和应用源码，忽略系统 Python、用户 site 和环境变量。
 6. 生成以下便携目录：
@@ -179,7 +183,7 @@ TextSnapLayout/
 
 1. 建立项目骨架、依赖锁和纯布局类型。
 2. 实现布局算法、瓦片生成、检测去重和状态机，并完成纯单元测试。
-3. 在 ARM64 Linux 安装同版本 Paddle CPU wheel，接入真实 det/rec 和固定样本回归。
+3. 在目标 Windows 11 x64、Intel i7-13700 环境接入真实 det/rec 和固定样本回归。
 4. 实现 Windows DPI、GDI 截图、遮罩、热键、托盘、单实例和开机启动。
 5. 完成结果窗口、取消流程、旧结果恢复、隐私和离线保护。
 6. 构建 win-x64 便携目录和 ZIP，执行静态包验证。
@@ -202,7 +206,7 @@ TextSnapLayout/
   - 外边距裁剪、纵向空行、尾随空格清理。
   - 结果窗宽度变化不会改变真实换行。
 - 隐私：模拟全部文件写入，断言正常任务除显式设置保存外不落盘；模拟网络连接必须立即失败。
-- Linux 真实 OCR：使用与 Windows 包相同的模型、PaddleOCR 和参数，在断网环境运行。
+- Windows 真实 OCR：在 Intel i7-13700 上使用与发布包相同的模型、推理框架和参数，在断网环境运行。
 - 固定测试语料由受控 HTML/CSS 页面生成，覆盖中文文档、英文网页、中英混排、代码、长行、缩进、双栏、反色文字和 4K 小字。
 - 清晰高对比样本验收：
   - 不丢失文字行。
@@ -235,6 +239,7 @@ TextSnapLayout/
 - 4K 原分辨率分块可能需要十几秒或更久，精度优先于固定延迟。
 - 纯文本只能近似像素布局，无法恢复真实 Tab、CSS、字体大小、表格线、HTML 或交互。
 - 无代码签名，SmartScreen 无法从代码层消除。
-- ARM64 Linux 可以验证 OCR、布局和包结构，但不能证明 Windows DLL 加载、全局热键、托盘、DPI/GDI 截图已经成功；这些结论必须以用户实机结果为准。
-- 如果 QThread 中的 Paddle 原生调用导致主界面无法重绘，该问题会重新打开“单进程架构”决策；在出现实证前不擅自改为 Python 子进程或第二套运行时。
+- 项目不支持 Linux 或 ARM；所有发布结论必须来自目标 Windows 11 x64、Intel
+  i7-13700 环境，Win32 交互行为必须以该环境的实机结果为准。
+- 如果 QThread 中的 ONNX Runtime 原生调用导致主界面无法重绘，该问题会重新打开“单进程架构”决策；在出现实证前不擅自改为 Python 子进程或第二套运行时。
 - 如果用户移动或删除程序目录前未关闭开机启动，HKCU 中可能留下失效路径；README 必须说明先关闭开机启动，重新运行已移动程序时则自动更新路径。

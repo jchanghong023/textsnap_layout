@@ -74,13 +74,14 @@ class ResultWindow(QWidget):
         self.activateWindow()
 
     def copy_all(self) -> None:
-        """Copy the original layout string without rewriting or closing it."""
+        """Copy the original layout string and close the result window."""
 
         if self._result_text is None:
             return
         clipboard = QApplication.clipboard()
         if clipboard is not None:
             clipboard.setText(self._result_text)
+            self.close()
 
     @staticmethod
     def _available_geometry(target_screen) -> QRect:

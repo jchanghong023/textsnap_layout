@@ -47,6 +47,7 @@ from scripts.release_pipeline import (
     publish_staging,
     sha256_file,
     stage_application_source,
+    stage_derived_onnx_models,
     validate_lock_set,
     validate_pe_tree,
     validate_tar_members,
@@ -228,9 +229,9 @@ class TargetAndLockTests(unittest.TestCase):
             resources=copy.deepcopy(locks.resources),
         )
 
-    def test_checked_in_lock_has_exact_68_wheel_windows_closure_shape(self) -> None:
+    def test_checked_in_lock_has_exact_70_wheel_windows_closure_shape(self) -> None:
         report = validate_lock_set(LockSet.load(REPOSITORY_ROOT / "vendor-lock"))
-        self.assertEqual(report["wheel_count"], 68)
+        self.assertEqual(report["wheel_count"], 70)
         self.assertEqual(report["runtime_resource_count"], 4)
 
     def test_duplicate_json_keys_are_rejected(self) -> None:
@@ -762,6 +763,21 @@ class FetchAndPeTests(unittest.TestCase):
 
         def __exit__(self, *args: object) -> None:
             self.close()
+
+    def test_checked_in_onnx_models_are_hash_verified_and_staged(self) -> None:
+        locks = LockSet.load(REPOSITORY_ROOT / "vendor-lock")
+        with tempfile.TemporaryDirectory() as directory:
+            stage = Path(directory) / "stage"
+            report = stage_derived_onnx_models(
+                locks,
+                REPOSITORY_ROOT / "vendor-models",
+                stage,
+            )
+            self.assertEqual(len(report["files"]), 2)
+            for entry in locks.derived_model_files:
+                path = stage / entry["destination_path"]
+                self.assertTrue(path.is_file())
+                self.assertEqual(sha256_file(path), (entry["sha256"], entry["size"]))
 
     def test_fetch_uses_exact_hash_and_does_not_keep_partial_file(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

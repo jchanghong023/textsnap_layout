@@ -507,14 +507,6 @@ class RealOcrRegressionTests(unittest.TestCase):
         model_root, font_file = self._require_paths(rendering)
 
         engine_config: dict[str, object] = {}
-        if platform.machine().lower() in {"aarch64", "arm64"}:
-            if os.environ.get("TEXTSNAP_ALLOW_ARM_COMPAT") != "1":
-                self.skipTest(
-                    "ARM cannot provide target MKL-DNN/10-thread equivalence; "
-                    "set TEXTSNAP_ALLOW_ARM_COMPAT=1 for the explicit paddle/1 "
-                    "smoke test"
-                )
-            engine_config = {"run_mode": "paddle", "cpu_threads": 1}
 
         before_models = _snapshot(model_root)
         before_font = (

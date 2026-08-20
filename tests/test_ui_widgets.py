@@ -394,12 +394,9 @@ class ResultWindowTests(QtWidgetTestCase):
         )
 
         QTest.mouseClick(window.copy_all_button, Qt.MouseButton.LeftButton)
-        self.assertEqual(QApplication.clipboard().text(), source)
-        self.assertTrue(window.isVisible())
-        self.assertEqual(window.result_text, source)
-
-        window.close()
         self.app.processEvents()
+        self.assertEqual(QApplication.clipboard().text(), source)
+        self.assertFalse(window.isVisible())
         self.assertEqual(closed, [True])
         self.assertIsNone(window.result_text)
         self.assertEqual(window.text_edit.toPlainText(), "")
@@ -420,6 +417,7 @@ class ResultWindowTests(QtWidgetTestCase):
             Qt.KeyboardModifier.ControlModifier,
         )
         self.assertEqual(QApplication.clipboard().text(), "alpha  beta")
+        self.assertTrue(window.isVisible())
 
 
 class SettingsWindowTests(QtWidgetTestCase):

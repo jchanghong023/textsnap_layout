@@ -23,9 +23,10 @@
     }
   },
   "resolution": {
-    "artifact_count": 68,
+    "artifact_count": 70,
     "direct_requirements": [
       "numpy==2.2.6",
+      "onnxruntime==1.28.0",
       "opencv-contrib-python==4.10.0.84",
       "paddleocr==3.7.0",
       "paddlepaddle==3.2.2",
@@ -33,7 +34,7 @@
       "PySide6-Essentials==6.11.1"
     ],
     "selected_extra": "paddlex[ocr-core]",
-    "active_requires_dist_edges": 112,
+    "active_requires_dist_edges": 116,
     "note": "Host pip target options do not reliably evaluate all Windows markers. This lock was re-evaluated with the explicit marker environment above; colorama and tzdata are required Windows-only additions.",
     "installation_policy": "Fetch only these exact URLs, verify size and SHA-256, then install with dependency resolution disabled."
   },
@@ -520,6 +521,35 @@
       }
     },
     {
+      "name": "flatbuffers",
+      "version": "25.12.19",
+      "filename": "flatbuffers-25.12.19-py2.py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/e8/2d/d2a548598be01649e2d46231d151a6c56d10b964d94043a335ae56ea2d92/flatbuffers-25.12.19-py2.py3-none-any.whl",
+      "size": 26661,
+      "sha256": "7634f50c427838bb021c2d66a3d1168e9d199b0607e6329399f04846d42e20b4",
+      "wheel_tags": [
+        "py2-none-any",
+        "py3-none-any"
+      ],
+      "requires_python": null,
+      "selected_extras": [],
+      "source": {
+        "kind": "transitive",
+        "direct_requirement": null,
+        "required_by": [
+          {
+            "name": "onnxruntime",
+            "requirement": "flatbuffers"
+          }
+        ]
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-08-20"
+      }
+    },
+    {
       "name": "frozenlist",
       "version": "1.8.0",
       "filename": "frozenlist-1.8.0-cp313-cp313-win_amd64.whl",
@@ -953,6 +983,10 @@
         "direct_requirement": "numpy==2.2.6",
         "required_by": [
           {
+            "name": "onnxruntime",
+            "requirement": "numpy>=1.21.6"
+          },
+          {
             "name": "opencv-contrib-python",
             "requirement": "numpy >=1.17.0 ; python_version >= \"3.7\""
           },
@@ -1002,6 +1036,29 @@
         "status": "verified",
         "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
         "verified_at": "2026-07-25"
+      }
+    },
+    {
+      "name": "onnxruntime",
+      "version": "1.28.0",
+      "filename": "onnxruntime-1.28.0-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/56/f1/51225c202edba4dfc94e1ea03f3d78f1aaf307da75fd792c0ce1946b2514/onnxruntime-1.28.0-cp313-cp313-win_amd64.whl",
+      "size": 13755033,
+      "sha256": "1a1a19175464665c9b8d50bc916f216cc0b569110045b7bbca8f9f290b186f58",
+      "wheel_tags": [
+        "cp313-cp313-win_amd64"
+      ],
+      "requires_python": ">=3.11",
+      "selected_extras": [],
+      "source": {
+        "kind": "direct",
+        "direct_requirement": "onnxruntime==1.28.0",
+        "required_by": []
+      },
+      "verification": {
+        "status": "verified",
+        "method": "downloaded file matched PyPI release size and SHA-256; wheel METADATA and WHEEL inspected",
+        "verified_at": "2026-08-20"
       }
     },
     {
@@ -1082,6 +1139,10 @@
           },
           {
             "name": "modelscope",
+            "requirement": "packaging"
+          },
+          {
+            "name": "onnxruntime",
             "requirement": "packaging"
           },
           {
@@ -1312,6 +1373,10 @@
         "kind": "transitive",
         "direct_requirement": null,
         "required_by": [
+          {
+            "name": "onnxruntime",
+            "requirement": "protobuf>=4.25.8"
+          },
           {
             "name": "paddlepaddle",
             "requirement": "protobuf>=3.20.2"

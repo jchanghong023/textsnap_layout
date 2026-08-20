@@ -222,8 +222,7 @@ class OcrEngineTests(unittest.TestCase):
         directory.mkdir()
         contents = {
             "inference.yml": f"Global:\n  model_name: {model_name}\n".encode(),
-            "inference.json": b"model",
-            "inference.pdiparams": b"parameters",
+            "inference.onnx": b"onnx-model",
         }
         hashes = {}
         for name, content in contents.items():
@@ -260,9 +259,13 @@ class OcrEngineTests(unittest.TestCase):
         self.assertEqual(factory.detector_kwargs["box_thresh"], 0.5)
         self.assertEqual(factory.detector_kwargs["unclip_ratio"], 1.5)
         config = factory.detector_kwargs["engine_config"]
-        self.assertEqual(config["run_mode"], "mkldnn")
-        self.assertEqual(config["cpu_threads"], 10)
-        self.assertFalse(config["enable_new_ir"])
+        self.assertEqual(factory.detector_kwargs["engine"], "onnxruntime")
+        self.assertEqual(factory.recognizer_kwargs["engine"], "onnxruntime")
+        self.assertEqual(config["providers"], ("CPUExecutionProvider",))
+        self.assertEqual(config["graph_optimization_level"], 99)
+        self.assertEqual(config["intra_op_num_threads"], 10)
+        self.assertEqual(config["inter_op_num_threads"], 1)
+        self.assertEqual(config["execution_mode"], "sequential")
         self.assertEqual(factory.detector.calls[0][1], 1)
         self.assertEqual(factory.recognizer.calls[0][1], 1)
         self.assertIsNone(engine.close())
@@ -270,7 +273,7 @@ class OcrEngineTests(unittest.TestCase):
         self.assertTrue(factory.recognizer.closed)
 
     @unittest.skipUnless(os.name == "nt", "Windows model path behavior")
-    def test_unicode_model_root_uses_ascii_relative_predictor_paths(self) -> None:
+    def test_unicode_model_root_uses_absolute_predictor_paths(self) -> None:
         model_root = Path(self.temporary_directory.name) / "中文 path" / "models"
         model_root.mkdir(parents=True)
         detection = self._make_model(model_root / DETECTION_MODEL_NAME, DETECTION_MODEL_NAME)
@@ -304,30 +307,29 @@ class OcrEngineTests(unittest.TestCase):
 
         self.assertIsNone(engine.initialize())
 
-        self.assertEqual(factory.working_directories, [model_root.resolve()] * 2)
+        self.assertEqual(factory.working_directories, [original_working_directory] * 2)
         self.assertEqual(
             factory.detector_kwargs["model_dir"],
-            DETECTION_MODEL_NAME,
+            str(detection.directory.resolve()),
         )
         self.assertEqual(
             factory.recognizer_kwargs["model_dir"],
-            RECOGNITION_MODEL_NAME,
+            str(recognition.directory.resolve()),
         )
         self.assertEqual(Path.cwd(), original_working_directory)
 
-    def test_explicit_arm_integration_override_has_no_silent_fallback(self) -> None:
+    def test_explicit_cpu_thread_override_has_no_silent_fallback(self) -> None:
         engine, factory, _ = self._engine(
-            engine_config={"run_mode": "paddle", "cpu_threads": 1}
+            engine_config={"intra_op_num_threads": 1}
         )
         self.assertIsNone(engine.initialize())
         config = factory.detector_kwargs["engine_config"]
-        self.assertEqual(config["run_mode"], "paddle")
-        self.assertEqual(config["cpu_threads"], 1)
-        self.assertFalse(config["enable_new_ir"])
+        self.assertEqual(config["intra_op_num_threads"], 1)
+        self.assertEqual(config["providers"], ("CPUExecutionProvider",))
 
     def test_hash_mismatch_is_sanitized_and_prevents_model_creation(self) -> None:
         bad_hashes = dict(self.detection_spec.files_sha256)
-        bad_hashes["inference.json"] = "0" * 64
+        bad_hashes["inference.onnx"] = "0" * 64
         self.detection_spec = LocalModelSpec(
             DETECTION_MODEL_NAME,
             self.detection_spec.directory,

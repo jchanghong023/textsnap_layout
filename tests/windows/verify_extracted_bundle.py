@@ -757,10 +757,14 @@ def _run_threaded_ocr(
         engine = OcrEngine(detector, recognizer)
         if dict(engine.engine_config) != {
             "device_type": "cpu",
-            "run_mode": "mkldnn",
-            "cpu_threads": 10,
-            "mkldnn_cache_capacity": 10,
-            "enable_new_ir": False,
+            "providers": ("CPUExecutionProvider",),
+            "graph_optimization_level": 99,
+            "intra_op_num_threads": 10,
+            "inter_op_num_threads": 1,
+            "execution_mode": "sequential",
+            "log_severity_level": 3,
+            "enable_mem_pattern": True,
+            "enable_cpu_mem_arena": True,
         }:
             raise AcceptanceError("ocr-engine-config")
         return engine

@@ -1,12 +1,14 @@
 # TextSnap Layout
 
-TextSnap Layout 是面向 Windows 11 x64 的离线截图 OCR 工具。它常驻系统托盘，
+TextSnap Layout 是仅支持 Windows 11 x86-64（x64）、Intel Core i7-13700 的离线
+截图 OCR 工具。它常驻系统托盘，
 通过全局快捷键截取鼠标所在显示器的一块区域，使用包内
 `PP-OCRv6_small_det` 和 `PP-OCRv6_small_rec` 识别，并输出保留二维间距的
 纯文本。
 
-当前仓库已经包含应用、测试、原生启动器、精确依赖锁和 ARM64 Linux 到
-Windows x64 的便携构建流水线。项目只用于个人多台电脑，不面向外部发布。
+当前仓库已经包含应用、测试、原生启动器、精确依赖锁和 Windows x64 原生便携
+构建流水线。项目只支持 Windows 11 x86-64（x64）、Intel Core i7-13700，不支持 Linux、
+Windows ARM64 或其他 ARM 环境；只用于个人多台电脑，不面向外部发布。
 
 ## 运行方式
 
@@ -19,7 +21,7 @@ Windows x64 的便携构建流水线。项目只用于个人多台电脑，不�
    8 个物理像素的选区也按取消处理。
 4. 从托盘打开设置，可修改快捷键、开机启动并查看或重试模型状态。
 5. 结果窗口支持标准选择、`Ctrl+C`、`Ctrl+A` 和“复制全部”，窗口缩放不会改变
-   原始换行。
+   原始换行；点击“复制全部”后结果窗口自动关闭。
 
 程序只允许用户明确保存的 `data/settings.json` 发生变化；不上传、不遥测、
 不检查更新、不下载模型，也不主动保存截图、OCR 文本、历史或默认运行日志。
@@ -48,83 +50,83 @@ SmartScreen 可能显示“未知发布者”。
 ## 开发验证
 
 以下命令均从仓库根目录运行。基础纯 Python/静态测试不假定宿主已安装 Qt 或
-Paddle；相应测试会明确跳过：
+OCR 运行时；相应测试会明确跳过：
 
-```bash
-PYTHONPATH=src python3 -B -m unittest discover -s tests -v
+```powershell
+$env:PYTHONPATH = 'src'
+py -3.13 -B -m unittest discover -s tests -v
 ```
 
 Qt 联测需要 PySide6 Essentials 6.11.1 和 NumPy 2.2.6：
 
-```bash
-QT_QPA_PLATFORM=offscreen PYTHONPATH=src \
-python3 -B -m unittest \
-  tests.test_qt_instance tests.test_qt_worker \
+```powershell
+$env:QT_QPA_PLATFORM = 'offscreen'
+$env:PYTHONPATH = 'src'
+py -3.13 -B -m unittest `
+  tests.test_qt_instance tests.test_qt_worker `
   tests.test_ui_widgets tests.test_controller -v
 ```
 
-真实 OCR 回归需要 PaddlePaddle 3.2.2、PaddleOCR 3.7.0、PaddleX 3.7.2、
-NumPy 2.2.6、锁定模型和本地字体。ARM64 Linux 没有目标 MKL-DNN 等价环境，
-因此只允许显式的 `paddle`/单线程兼容性冒烟测试：
+真实 OCR 回归只在 Windows 11 x64、Intel i7-13700 上运行，需要 ONNX Runtime
+CPU 1.28.0、发布锁指定的其余依赖、锁定模型和本地字体：
 
-```bash
-PYTHONPATH=src \
-TEXTSNAP_RUN_REAL_OCR=1 \
-TEXTSNAP_ALLOW_ARM_COMPAT=1 \
-TEXTSNAP_TEST_MODEL_ROOT=/absolute/path/to/models \
-TEXTSNAP_TEST_FONT=/absolute/path/to/local-font.otf \
-python3 -B -m unittest tests.integration.test_real_ocr -v
+```powershell
+$env:PYTHONPATH = 'src'
+$env:TEXTSNAP_RUN_REAL_OCR = '1'
+$env:TEXTSNAP_TEST_MODEL_ROOT = 'C:\absolute\path\to\models'
+$env:TEXTSNAP_TEST_FONT = 'C:\absolute\path\to\local-font.otf'
+py -3.13 -B -m unittest tests.integration.test_real_ocr -v
 ```
-
-该 ARM64 结果不能替代 Windows x64 上 MKL-DNN、10 推理线程和 DLL 加载验证。
 
 ## 锁定资源与便携 staging
 
-先安装 x86_64 MinGW 交叉工具链，并准备**精确 CPython 3.13.14** 宿主可执行
-文件，用于生成与嵌入运行时 magic 一致的 checked-hash 字节码。缓存和 staging
-必须放在仓库外的绝对路径：
+在 Windows 11 x64、Intel i7-13700 主机安装 x86_64 MinGW 工具链，并准备
+**精确 CPython 3.13.14** 宿主可执行文件，用于生成与嵌入运行时 magic 一致的
+checked-hash 字节码。先执行 `git lfs pull`，确保 `vendor-models` 下两套 ONNX
+模型不是 LFS 指针；缓存和 staging 必须放在仓库外的绝对短路径，避免第三方包
+的深层目录触发 Windows 路径长度限制：
 
-```bash
-python3 -B -m scripts.build_release validate-lock \
+```powershell
+py -3.13 -B -m scripts.build_release validate-lock `
   --lock-dir vendor-lock
 
-python3 -B -m scripts.build_release fetch \
-  --lock-dir vendor-lock \
-  --cache-dir /absolute/path/to/cache
+py -3.13 -B -m scripts.build_release fetch `
+  --lock-dir vendor-lock `
+  --cache-dir C:\ts\cache
 
-python3 -B -m scripts.build_release validate-wheel-closure \
-  --lock-dir vendor-lock \
-  --cache-dir /absolute/path/to/cache
+py -3.13 -B -m scripts.build_release validate-wheel-closure `
+  --lock-dir vendor-lock `
+  --cache-dir C:\ts\cache
 ```
 
 生成个人使用的 staging：
 
-```bash
-python3 -B -m scripts.build_release stage \
-  --profile private-use \
-  --lock-dir vendor-lock \
-  --cache-dir /absolute/path/to/cache \
-  --stage-dir /absolute/path/to/build/TextSnapLayout \
-  --python-for-bytecode /absolute/path/to/python-3.13.14
+```powershell
+py -3.13 -B -m scripts.build_release stage `
+  --profile private-use `
+  --lock-dir vendor-lock `
+  --cache-dir C:\ts\cache `
+  --stage-dir C:\ts\b\TextSnapLayout `
+  --python-for-bytecode C:\absolute\path\to\python-3.13.14.exe
 
-python3 -B -m scripts.build_release verify \
-  --lock-dir vendor-lock \
-  --stage-dir /absolute/path/to/build/TextSnapLayout
+py -3.13 -B -m scripts.build_release verify `
+  --lock-dir vendor-lock `
+  --stage-dir C:\ts\b\TextSnapLayout
 ```
 
 随后生成 ZIP：
 
-```bash
-python3 -B -m scripts.build_release package \
-  --lock-dir vendor-lock \
-  --stage-dir /absolute/path/to/build/TextSnapLayout \
-  --output-dir /absolute/path/to/artifacts
+```powershell
+py -3.13 -B -m scripts.build_release package `
+  --lock-dir vendor-lock `
+  --stage-dir C:\ts\b\TextSnapLayout `
+  --output-dir C:\ts\a
 ```
 
-流水线只使用锁中的精确 HTTPS URL、大小和 SHA-256，不在 ARM64 Linux 上执行
-Windows wheel 代码。它检查 wheel RECORD、安全路径、PE 架构与导入、模型哈希、
-重复 DLL、BUILD_MANIFEST 和确定性 ZIP。`package` 会重新读取当前锁并复验整个
-staging，不能只信任 staging 内自报的状态。
+流水线只使用锁中的精确 HTTPS URL、大小和 SHA-256，并只接受 Windows x64
+平台产物。它检查 wheel RECORD、安全路径、PE 架构与导入、模型哈希、重复 DLL、
+BUILD_MANIFEST 和确定性 ZIP。`package` 会重新读取当前锁并复验整个 staging，
+不能只信任 staging 内自报的状态。
 
 PE 静态检查只把与导入者位于同目录或明确运行时目录中的 DLL 记为静态可解析；
 仅在其他目录发现同名 DLL 时会写入 `load_path_pending`，继续保留为

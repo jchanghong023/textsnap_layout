@@ -1,4 +1,4 @@
-"""Deterministic, cross-platform construction of the Windows portable bundle.
+"""Deterministic native Windows construction of the portable bundle.
 
 This module deliberately installs wheels as ZIP archives.  It never imports or
 executes target packages and never asks the host interpreter to resolve target
@@ -36,7 +36,7 @@ from typing import Any, BinaryIO, Iterator, Mapping, Sequence
 
 PRODUCT_NAME = "TextSnapLayout"
 PRODUCT_VERSION = "0.1.0"
-EXPECTED_WHEEL_COUNT = 68
+EXPECTED_WHEEL_COUNT = 70
 LOCK_SCHEMA_VERSION = "1.0.0"
 PYTHON_VERSION = "3.13.14"
 TARGET_MARKER_ENVIRONMENT = {
@@ -54,6 +54,7 @@ TARGET_MARKER_ENVIRONMENT = {
 }
 PINNED_DIRECT_REQUIREMENTS = (
     "numpy==2.2.6",
+    "onnxruntime==1.28.0",
     "opencv-contrib-python==4.10.0.84",
     "paddleocr==3.7.0",
     "paddlepaddle==3.2.2",
@@ -62,6 +63,8 @@ PINNED_DIRECT_REQUIREMENTS = (
 )
 PINNED_CORE_WHEEL_VERSIONS = {
     "numpy": "2.2.6",
+    "onnxruntime": "1.28.0",
+    "flatbuffers": "25.12.19",
     "opencv-contrib-python": "4.10.0.84",
     "paddleocr": "3.7.0",
     "paddlepaddle": "3.2.2",
@@ -83,10 +86,6 @@ PINNED_RESOURCE_IDENTITIES = {
         "PP-OCRv6_small_rec",
     ),
     "noto-sans-mono-cjk-sc-regular-sans2.004": ("font", "Sans2.004"),
-    "paddlepaddle-3.2.2-cp312-linux-aarch64-integration": (
-        "integration_test_wheel",
-        "3.2.2",
-    ),
 }
 STAGING_STATE_NAME = ".textsnap-staging.json"
 BUILD_MANIFEST_NAME = "BUILD_MANIFEST.json"
@@ -243,12 +242,12 @@ class LockSet:
 
     @property
     def runtime_resources(self) -> list[dict[str, Any]]:
-        return [
-            artifact
-            for artifact in self.resources.get("artifacts", ())
-            if artifact.get("kind") != "integration_test_wheel"
-            and artifact.get("target", {}).get("include_in_windows_zip", True)
-        ]
+        return list(self.resources.get("artifacts", ()))
+
+    @property
+    def derived_model_files(self) -> list[dict[str, Any]]:
+        derived = self.resources.get("derived_models", {})
+        return list(derived.get("files", ())) if isinstance(derived, Mapping) else []
 
     @property
     def all_runtime_artifacts(self) -> list[dict[str, Any]]:
@@ -754,17 +753,41 @@ def validate_lock_set(
                 raise LockValidationError(
                     f"{context}: font is not locked for Windows runtime"
                 )
-        elif kind == "integration_test_wheel":
-            if artifact.get("target", {}).get("include_in_windows_zip") is not False:
-                raise LockValidationError(
-                    f"{context}: integration wheel must be excluded from Windows ZIP"
-                )
         else:
             raise LockValidationError(f"{context}: unknown resource kind {kind!r}")
     if resource_identities != PINNED_RESOURCE_IDENTITIES:
         raise LockValidationError(
             "resource identities or versions differ from the implementation plan"
         )
+
+    derived = _require_mapping(
+        locks.resources.get("derived_models"), "derived ONNX models"
+    )
+    if derived.get("format") != "onnx" or derived.get("opset_version") != 11:
+        raise LockValidationError("derived models must be ONNX opset 11")
+    derived_files = _require_list(derived.get("files"), "derived model files")
+    expected_model_names = {"PP-OCRv6_small_det", "PP-OCRv6_small_rec"}
+    actual_model_names: set[str] = set()
+    for index, raw_entry in enumerate(derived_files):
+        entry = _require_mapping(raw_entry, f"derived model {index}")
+        model_name = str(entry.get("model_name", ""))
+        source_path = validate_windows_relative_path(str(entry.get("source_path", "")))
+        destination_path = validate_windows_relative_path(
+            str(entry.get("destination_path", ""))
+        )
+        if (
+            model_name not in expected_model_names
+            or source_path.as_posix() != f"{model_name}/inference.onnx"
+            or destination_path.as_posix() != f"models/{model_name}/inference.onnx"
+            or not isinstance(entry.get("size"), int)
+            or int(entry["size"]) <= 0
+            or not isinstance(entry.get("sha256"), str)
+            or not re.fullmatch(r"[0-9a-f]{64}", str(entry["sha256"]))
+        ):
+            raise LockValidationError(f"derived model {index}: invalid locked identity")
+        actual_model_names.add(model_name)
+    if actual_model_names != expected_model_names or len(derived_files) != 2:
+        raise LockValidationError("exactly the two PP-OCRv6 small ONNX models are required")
 
     return {
         "wheel_count": len(artifacts),
@@ -1927,14 +1950,31 @@ def extract_locked_model(
             if source is None:
                 raise UnsafeArchiveError(f"cannot read TAR member {source_path}")
             with source:
-                details = _copy_verified_stream(
-                    source,
-                    safe_destination(stage_root, relative),
-                    expected_sha256=str(entry["sha256"]),
-                    expected_size=int(entry["size"]),
-                )
-            details["path"] = relative
-            output.append(details)
+                if destination_tail not in {
+                    "inference.json",
+                    "inference.pdmodel",
+                    "inference.pdiparams",
+                }:
+                    details = _copy_verified_stream(
+                        source,
+                        safe_destination(stage_root, relative),
+                        expected_sha256=str(entry["sha256"]),
+                        expected_size=int(entry["size"]),
+                    )
+                    details["path"] = relative
+                    output.append(details)
+                else:
+                    digest = hashlib.sha256()
+                    size = 0
+                    while block := source.read(_HASH_CHUNK_SIZE):
+                        digest.update(block)
+                        size += len(block)
+                    if size != int(entry["size"]) or digest.hexdigest() != str(
+                        entry["sha256"]
+                    ):
+                        raise HashMismatchError(
+                            f"{artifact['id']}: locked source model member mismatch"
+                        )
     return {
         "id": artifact["id"],
         "kind": artifact["kind"],
@@ -2021,6 +2061,33 @@ def stage_runtime_resources(
     if seen_kinds.get("font") != 1:
         raise LockValidationError("exactly one locked application font is required")
     return output
+
+
+def stage_derived_onnx_models(
+    locks: LockSet,
+    model_root: Path,
+    stage_root: Path,
+) -> dict[str, Any]:
+    if not model_root.is_dir():
+        raise PipelineError(f"derived ONNX model root not found: {model_root}")
+    files: list[dict[str, Any]] = []
+    for entry in locks.derived_model_files:
+        source_relative = validate_windows_relative_path(str(entry["source_path"]))
+        destination_relative = validate_windows_relative_path(
+            str(entry["destination_path"])
+        )
+        source = safe_destination(model_root, source_relative.as_posix())
+        verify_file(source, str(entry["sha256"]), int(entry["size"]))
+        with source.open("rb") as stream:
+            details = _copy_verified_stream(
+                stream,
+                safe_destination(stage_root, destination_relative.as_posix()),
+                expected_sha256=str(entry["sha256"]),
+                expected_size=int(entry["size"]),
+            )
+        details["path"] = destination_relative.as_posix()
+        files.append(details)
+    return {"id": "derived-onnx-models", "kind": "derived-models", "files": files}
 
 
 def prune_cpython_console_launcher(stage_root: Path) -> dict[str, Any]:
@@ -2692,6 +2759,8 @@ def verify_locked_models(
         ).as_posix()
         files: list[dict[str, Any]] = []
         for entry in unpack["files"]:
+            if entry["destination_path"] != "inference.yml":
+                continue
             relative = (
                 f"{destination_root}/"
                 f"{validate_windows_relative_path(str(entry['destination_path'])).as_posix()}"
@@ -2706,8 +2775,35 @@ def verify_locked_models(
                 }
             )
         output.append({"id": artifact["id"], "files": files})
+    by_id = {entry["id"]: entry for entry in output}
+    for entry in locks.derived_model_files:
+        model_name = str(entry["model_name"])
+        artifact_id = (
+            "pp-ocrv6-small-det-inference"
+            if model_name.endswith("_det")
+            else "pp-ocrv6-small-rec-inference"
+        )
+        relative = validate_windows_relative_path(
+            str(entry["destination_path"])
+        ).as_posix()
+        verify_file(
+            safe_destination(stage_root, relative),
+            str(entry["sha256"]),
+            int(entry["size"]),
+        )
+        by_id[artifact_id]["files"].append(
+            {"path": relative, "sha256": entry["sha256"], "size": entry["size"]}
+        )
+        model_directory = safe_destination(stage_root, f"models/{model_name}")
+        for forbidden_name in ("inference.json", "inference.pdmodel", "inference.pdiparams"):
+            if (model_directory / forbidden_name).exists():
+                raise PipelineError(
+                    f"Paddle runtime model file must not be staged: {model_name}/{forbidden_name}"
+                )
     if len(output) != 2:
         raise PipelineError("exactly two staged OCR models must be verified")
+    if any(len(model["files"]) != 2 for model in output):
+        raise PipelineError("each staged OCR model must contain ONNX and YAML files")
     return output
 
 
@@ -2969,8 +3065,8 @@ def create_build_manifest(
         "windows_validation": {
             "status": "pending",
             "reason": (
-                "Windows 11 x64 behavior and non-local DLL search paths cannot "
-                "be proven on ARM64 Linux"
+                "interactive Windows 11 x64 behavior and non-local DLL search "
+                "paths require extracted-bundle acceptance"
             ),
             "pe_load_path_pending_count": len(pe_validation["load_path_pending"]),
         },
@@ -3319,6 +3415,7 @@ def stage_portable_tree(
     readme: Path | None,
     python_for_bytecode: Path,
     native_source: Path,
+    onnx_model_root: Path,
     toolchain_prefix: str,
     profile: str,
 ) -> dict[str, Any]:
@@ -3333,6 +3430,7 @@ def stage_portable_tree(
         lock_report = validate_lock_set(locks)
         closure = validate_wheel_closure(locks, cache_root)
         resources = stage_runtime_resources(locks, cache_root, temporary)
+        resources.append(stage_derived_onnx_models(locks, onnx_model_root, temporary))
         resources.append(prune_cpython_console_launcher(temporary))
         registry = InstallRegistry()
         wheel_installs = [
