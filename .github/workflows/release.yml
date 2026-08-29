@@ -92,7 +92,7 @@ jobs:
       - name: Build and statically verify portable package
         run: |
           $ErrorActionPreference = 'Stop'
-          New-Item -ItemType Directory -Force -Path $env:CACHE_DIR, $env:STAGE_DIR, $env:OUTPUT_DIR | Out-Null
+          New-Item -ItemType Directory -Force -Path $env:CACHE_DIR, $env:OUTPUT_DIR | Out-Null
 
           & $env:PYTHON_FOR_BYTECODE -B -m scripts.build_release validate-lock --lock-dir vendor-lock
           if ($LASTEXITCODE -ne 0) { throw 'validate-lock failed.' }
