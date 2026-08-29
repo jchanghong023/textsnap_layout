@@ -152,9 +152,10 @@ GitHub CLI。可选仓库变量 `TEXTSNAP_BUILD_ROOT` 指定短路径构建根�
   时构建立即失败，不会发布。
 
 工作流获取 Git LFS 模型，依次执行锁校验、资源获取、wheel 闭包校验、staging、
-静态验证、确定性打包和 SHA-256 复验，然后同时保存 Actions Artifact，并把 ZIP
-与 `.sha256` 上传为 GitHub Release 附件。GitHub 托管环境是 Windows Server
-2025，不替代计划要求的 Windows 11/i7-13700 原生行为和 OCR 实机验收。
+静态验证、确定性打包和 SHA-256 复验，并要求构建 ZIP 的哈希与仓库中同名 LFS
+ZIP 完全一致。验证通过后同时保存 Actions Artifact，并把 ZIP 与 `.sha256` 上传
+为 GitHub Release 附件。GitHub 托管环境是 Windows Server 2025，不替代计划
+要求的 Windows 11/i7-13700 原生行为和 OCR 实机验收。
 
 ## Windows 实机验收
 
