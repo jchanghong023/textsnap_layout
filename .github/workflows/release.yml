@@ -15,8 +15,8 @@ concurrency:
 
 jobs:
   release:
-    name: Build and publish Windows 11 x64 release
-    runs-on: [self-hosted, Windows, X64, textsnap-win11-i7-13700]
+    name: Build and publish GitHub-hosted Windows x64 release
+    runs-on: windows-2025
     timeout-minutes: 180
     defaults:
       run:
@@ -33,28 +33,24 @@ jobs:
           fetch-depth: 0
           lfs: false
 
+      - name: Set up exact CPython
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13.14"
+          architecture: x64
 
+      - name: Cache locked build inputs
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: textsnap-win-x64-${{ hashFiles('vendor-lock/*.json') }}
       - name: Verify release host and tools
         id: metadata
         run: |
           $ErrorActionPreference = 'Stop'
 
-          $os = Get-CimInstance Win32_OperatingSystem
-          if ($os.Caption -notmatch 'Windows 11') {
-            throw "Release builds require Windows 11; found $($os.Caption)."
-          }
-          if ($os.OSArchitecture -ne '64-bit') {
-            throw "Release builds require Windows x64; found $($os.OSArchitecture)."
-          }
 
-          $cpuNames = @(
-            Get-CimInstance Win32_Processor | ForEach-Object { $_.Name.Trim() }
-          )
-          if (-not ($cpuNames | Where-Object { $_ -match 'Intel\(R\).*Core\(TM\).*i7-13700' })) {
-            throw "Release builds require Intel Core i7-13700; found $($cpuNames -join ', ')."
-          }
-
-          foreach ($tool in @('git-lfs', 'gh', 'py')) {
+          foreach ($tool in @('git-lfs', 'gh', 'python')) {
             if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
               throw "Required tool is not available on PATH: $tool"
             }
@@ -65,10 +61,7 @@ jobs:
             }
           }
 
-          $python = (& py -3.13 -c "import sys; print(sys.executable)").Trim()
-          if ($LASTEXITCODE -ne 0 -or -not $python) {
-            throw 'CPython 3.13 is not available through py -3.13.'
-          }
+          $python = (Get-Command python -ErrorAction Stop).Source
           $pythonVersion = (& $python -I -B -c "import sys; print('.'.join(map(str, sys.version_info[:3])))").Trim()
           if ($LASTEXITCODE -ne 0 -or $pythonVersion -ne '3.13.14') {
             throw "Release builds require CPython 3.13.14; found $pythonVersion."
@@ -147,6 +140,16 @@ jobs:
           if ($expected -notmatch '^[0-9a-f]{64}$' -or $actual -ne $expected) {
             throw "SHA-256 mismatch: expected $expected, got $actual."
           }
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TextSnapLayout-${{ steps.metadata.outputs.version }}-win-x64
+          path: |
+            ${{ env.BUILD_ROOT }}\a\${{ github.run_id }}-${{ github.run_attempt }}\*.zip
+            ${{ env.BUILD_ROOT }}\a\${{ github.run_id }}-${{ github.run_attempt }}\*.sha256
+          if-no-files-found: error
+          compression-level: 0
 
       - name: Create GitHub release
         env:
