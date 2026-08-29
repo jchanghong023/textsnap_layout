@@ -141,14 +141,6 @@ jobs:
             throw "SHA-256 mismatch: expected $expected, got $actual."
           }
 
-          $pointer = (& git show "HEAD:zips/${{ steps.metadata.outputs.archive }}") -join "`n"
-          if ($LASTEXITCODE -ne 0) {
-            throw 'Unable to read the tracked release ZIP LFS pointer.'
-          }
-          $tracked = [regex]::Match($pointer, 'oid sha256:([0-9a-f]{64})').Groups[1].Value
-          if ($tracked -notmatch '^[0-9a-f]{64}$' -or $actual -ne $tracked) {
-            throw "Built ZIP differs from tracked LFS ZIP: tracked $tracked, built $actual."
-          }
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -159,6 +151,20 @@ jobs:
             ${{ env.BUILD_ROOT }}\a\${{ github.run_id }}-${{ github.run_attempt }}\*.sha256
           if-no-files-found: error
           compression-level: 0
+
+      - name: Compare tracked release ZIP
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = Join-Path $env:OUTPUT_DIR '${{ steps.metadata.outputs.archive }}'
+          $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $pointer = (& git show "HEAD:zips/${{ steps.metadata.outputs.archive }}") -join "`n"
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Unable to read the tracked release ZIP LFS pointer.'
+          }
+          $tracked = [regex]::Match($pointer, 'oid sha256:([0-9a-f]{64})').Groups[1].Value
+          if ($tracked -notmatch '^[0-9a-f]{64}$' -or $actual -ne $tracked) {
+            throw "Built ZIP differs from tracked LFS ZIP: tracked $tracked, built $actual."
+          }
 
       - name: Create GitHub release
         env:
