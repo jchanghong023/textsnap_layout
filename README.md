@@ -140,8 +140,9 @@ PE 静态检查只把与导入者位于同目录或明确运行时目录中的 D
 Windows 11 x64、Intel Core i7-13700，并带有
 `textsnap-win11-i7-13700` 自定义标签。Runner 还必须提供精确 CPython 3.13.14、
 x86_64 MinGW 的 `gcc`/`windres`、Git LFS、GitHub CLI 和构建资源下载网络。
-可选仓库变量 `TEXTSNAP_BUILD_CACHE` 指定持久缓存目录，默认
-`C:\ts\cache`；工具链命令带前缀时，通过 `TEXTSNAP_TOOLCHAIN_PREFIX` 指定。
+可选仓库变量 `TEXTSNAP_BUILD_ROOT` 指定短路径构建根目录，默认 `C:\ts`；
+`TEXTSNAP_BUILD_CACHE` 指定持久缓存目录，默认 `C:\ts\cache`；工具链命令带前缀
+时，通过 `TEXTSNAP_TOOLCHAIN_PREFIX` 指定。
 
 发布支持两种入口：
 

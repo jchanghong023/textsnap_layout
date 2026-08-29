@@ -22,9 +22,8 @@ jobs:
       run:
         shell: pwsh
     env:
+      BUILD_ROOT: ${{ vars.TEXTSNAP_BUILD_ROOT || 'C:\ts' }}
       CACHE_DIR: ${{ vars.TEXTSNAP_BUILD_CACHE || 'C:\ts\cache' }}
-      STAGE_DIR: ${{ runner.temp }}\TextSnapLayout-${{ github.run_id }}-${{ github.run_attempt }}
-      OUTPUT_DIR: ${{ runner.temp }}\TextSnapLayout-artifacts-${{ github.run_id }}-${{ github.run_attempt }}
       TOOLCHAIN_PREFIX: ${{ vars.TEXTSNAP_TOOLCHAIN_PREFIX }}
 
     steps:
@@ -84,10 +83,16 @@ jobs:
             throw "Tag ${{ github.ref_name }} does not match source version $tag."
           }
 
+          $runSuffix = '${{ github.run_id }}-${{ github.run_attempt }}'
+          $stageDir = Join-Path $env:BUILD_ROOT "b\TextSnapLayout-$runSuffix"
+          $outputDir = Join-Path $env:BUILD_ROOT "a\$runSuffix"
           "PYTHON_FOR_BYTECODE=$python" >> $env:GITHUB_ENV
+          "STAGE_DIR=$stageDir" >> $env:GITHUB_ENV
+          "OUTPUT_DIR=$outputDir" >> $env:GITHUB_ENV
           "version=$version" >> $env:GITHUB_OUTPUT
           "tag=$tag" >> $env:GITHUB_OUTPUT
           "archive=TextSnapLayout-$version-win-x64.zip" >> $env:GITHUB_OUTPUT
+
       - name: Fetch deterministic ONNX models
         run: git lfs pull --include="vendor-models/**" --exclude=""
 
@@ -176,5 +181,9 @@ jobs:
       - name: Remove transient build directories
         if: always()
         run: |
-          Remove-Item -LiteralPath $env:STAGE_DIR -Recurse -Force -ErrorAction SilentlyContinue
-          Remove-Item -LiteralPath $env:OUTPUT_DIR -Recurse -Force -ErrorAction SilentlyContinue
+          if ($env:STAGE_DIR) {
+            Remove-Item -LiteralPath $env:STAGE_DIR -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          if ($env:OUTPUT_DIR) {
+            Remove-Item -LiteralPath $env:OUTPUT_DIR -Recurse -Force -ErrorAction SilentlyContinue
+          }
