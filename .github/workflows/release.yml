@@ -1,0 +1,180 @@
+name: Build and publish release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish Windows 11 x64 release
+    runs-on: [self-hosted, Windows, X64, textsnap-win11-i7-13700]
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CACHE_DIR: ${{ vars.TEXTSNAP_BUILD_CACHE || 'C:\ts\cache' }}
+      STAGE_DIR: ${{ runner.temp }}\TextSnapLayout-${{ github.run_id }}-${{ github.run_attempt }}
+      OUTPUT_DIR: ${{ runner.temp }}\TextSnapLayout-artifacts-${{ github.run_id }}-${{ github.run_attempt }}
+      TOOLCHAIN_PREFIX: ${{ vars.TEXTSNAP_TOOLCHAIN_PREFIX }}
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: false
+
+
+      - name: Verify release host and tools
+        id: metadata
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $os = Get-CimInstance Win32_OperatingSystem
+          if ($os.Caption -notmatch 'Windows 11') {
+            throw "Release builds require Windows 11; found $($os.Caption)."
+          }
+          if ($os.OSArchitecture -ne '64-bit') {
+            throw "Release builds require Windows x64; found $($os.OSArchitecture)."
+          }
+
+          $cpuNames = @(
+            Get-CimInstance Win32_Processor | ForEach-Object { $_.Name.Trim() }
+          )
+          if (-not ($cpuNames | Where-Object { $_ -match 'Intel\(R\).*Core\(TM\).*i7-13700' })) {
+            throw "Release builds require Intel Core i7-13700; found $($cpuNames -join ', ')."
+          }
+
+          foreach ($tool in @('git-lfs', 'gh', 'py')) {
+            if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+              throw "Required tool is not available on PATH: $tool"
+            }
+          }
+          foreach ($tool in @("${env:TOOLCHAIN_PREFIX}gcc", "${env:TOOLCHAIN_PREFIX}windres")) {
+            if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
+              throw "Required MinGW tool is not available on PATH: $tool"
+            }
+          }
+
+          $python = (& py -3.13 -c "import sys; print(sys.executable)").Trim()
+          if ($LASTEXITCODE -ne 0 -or -not $python) {
+            throw 'CPython 3.13 is not available through py -3.13.'
+          }
+          $pythonVersion = (& $python -I -B -c "import sys; print('.'.join(map(str, sys.version_info[:3])))").Trim()
+          if ($LASTEXITCODE -ne 0 -or $pythonVersion -ne '3.13.14') {
+            throw "Release builds require CPython 3.13.14; found $pythonVersion."
+          }
+
+          $version = (& $python -B -c "from scripts.release_pipeline import PRODUCT_VERSION; print(PRODUCT_VERSION)").Trim()
+          if ($LASTEXITCODE -ne 0 -or $version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Invalid PRODUCT_VERSION: $version"
+          }
+          $tag = "v$version"
+          if ('${{ github.event_name }}' -eq 'push' -and '${{ github.ref_name }}' -ne $tag) {
+            throw "Tag ${{ github.ref_name }} does not match source version $tag."
+          }
+
+          "PYTHON_FOR_BYTECODE=$python" >> $env:GITHUB_ENV
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "archive=TextSnapLayout-$version-win-x64.zip" >> $env:GITHUB_OUTPUT
+      - name: Fetch deterministic ONNX models
+        run: git lfs pull --include="vendor-models/**" --exclude=""
+
+      - name: Build and statically verify portable package
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path $env:CACHE_DIR, $env:STAGE_DIR, $env:OUTPUT_DIR | Out-Null
+
+          & $env:PYTHON_FOR_BYTECODE -B -m scripts.build_release validate-lock --lock-dir vendor-lock
+          if ($LASTEXITCODE -ne 0) { throw 'validate-lock failed.' }
+
+          & $env:PYTHON_FOR_BYTECODE -B -m scripts.build_release fetch --lock-dir vendor-lock --cache-dir $env:CACHE_DIR
+          if ($LASTEXITCODE -ne 0) { throw 'fetch failed.' }
+
+          & $env:PYTHON_FOR_BYTECODE -B -m scripts.build_release validate-wheel-closure --lock-dir vendor-lock --cache-dir $env:CACHE_DIR
+          if ($LASTEXITCODE -ne 0) { throw 'validate-wheel-closure failed.' }
+
+          $stageArguments = @(
+            '-B', '-m', 'scripts.build_release', 'stage',
+            '--profile', 'private-use',
+            '--lock-dir', 'vendor-lock',
+            '--cache-dir', $env:CACHE_DIR,
+            '--stage-dir', $env:STAGE_DIR,
+            '--python-for-bytecode', $env:PYTHON_FOR_BYTECODE
+          )
+          if ($env:TOOLCHAIN_PREFIX) {
+            $stageArguments += @('--toolchain-prefix', $env:TOOLCHAIN_PREFIX)
+          }
+          & $env:PYTHON_FOR_BYTECODE @stageArguments
+          if ($LASTEXITCODE -ne 0) { throw 'stage failed.' }
+
+          & $env:PYTHON_FOR_BYTECODE -B -m scripts.build_release verify --lock-dir vendor-lock --stage-dir $env:STAGE_DIR
+          if ($LASTEXITCODE -ne 0) { throw 'verify failed.' }
+
+          & $env:PYTHON_FOR_BYTECODE -B -m scripts.build_release package --lock-dir vendor-lock --stage-dir $env:STAGE_DIR --output-dir $env:OUTPUT_DIR
+          if ($LASTEXITCODE -ne 0) { throw 'package failed.' }
+
+      - name: Verify release checksum
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archive = Join-Path $env:OUTPUT_DIR '${{ steps.metadata.outputs.archive }}'
+          $checksum = "$archive.sha256"
+          if (-not (Test-Path -LiteralPath $archive -PathType Leaf)) {
+            throw "Release archive was not produced: $archive"
+          }
+          if (-not (Test-Path -LiteralPath $checksum -PathType Leaf)) {
+            throw "Release checksum was not produced: $checksum"
+          }
+
+          $expected = ((Get-Content -LiteralPath $checksum -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
+          $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($expected -notmatch '^[0-9a-f]{64}$' -or $actual -ne $expected) {
+            throw "SHA-256 mismatch: expected $expected, got $actual."
+          }
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = '${{ steps.metadata.outputs.tag }}'
+          $archive = Join-Path $env:OUTPUT_DIR '${{ steps.metadata.outputs.archive }}'
+          $checksum = "$archive.sha256"
+
+          & gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            throw "GitHub Release already exists: $tag"
+          }
+
+          $releaseArguments = @(
+            'release', 'create', $tag,
+            $archive, $checksum,
+            '--repo', $env:GITHUB_REPOSITORY,
+            '--title', "TextSnap Layout $tag",
+            '--generate-notes'
+          )
+          if ('${{ github.event_name }}' -eq 'push') {
+            $releaseArguments += '--verify-tag'
+          } else {
+            $releaseArguments += @('--target', $env:GITHUB_SHA)
+          }
+
+          & gh @releaseArguments
+          if ($LASTEXITCODE -ne 0) { throw "Failed to create GitHub Release $tag." }
+
+      - name: Remove transient build directories
+        if: always()
+        run: |
+          Remove-Item -LiteralPath $env:STAGE_DIR -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -LiteralPath $env:OUTPUT_DIR -Recurse -Force -ErrorAction SilentlyContinue

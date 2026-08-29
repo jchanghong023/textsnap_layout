@@ -134,6 +134,28 @@ PE 静态检查只把与导入者位于同目录或明确运行时目录中的 D
 相同源码、锁文件、CPython 3.13.14 字节码构建器、zlib 和清单中记录的 MinGW
 工具链版本。
 
+## GitHub Actions 发布
+
+`.github/workflows/release.yml` 只在符合正式交付环境的自托管 Runner 上构建：
+Windows 11 x64、Intel Core i7-13700，并带有
+`textsnap-win11-i7-13700` 自定义标签。Runner 还必须提供精确 CPython 3.13.14、
+x86_64 MinGW 的 `gcc`/`windres`、Git LFS、GitHub CLI 和构建资源下载网络。
+可选仓库变量 `TEXTSNAP_BUILD_CACHE` 指定持久缓存目录，默认
+`C:\ts\cache`；工具链命令带前缀时，通过 `TEXTSNAP_TOOLCHAIN_PREFIX` 指定。
+
+发布支持两种入口：
+
+- 在 GitHub 的 Actions 页面手动运行 **Build and publish release**。工作流从
+  `scripts.release_pipeline.PRODUCT_VERSION` 读取版本，在所选提交上创建对应
+  `vX.Y.Z` 标签和 Release。
+- 推送与源码版本完全一致的标签，例如 `git push origin v0.1.0`。标签版本不一致
+  时构建立即失败，不会发布。
+
+工作流获取 Git LFS 模型，依次执行锁校验、资源获取、wheel 闭包校验、staging、
+静态验证、确定性打包和 SHA-256 复验，然后把 ZIP 与 `.sha256` 上传为 GitHub
+Release 附件。GitHub 托管的 `windows-latest` 不是 Windows 11/i7-13700
+验收环境，因此不用于该发布任务。
+
 ## Windows 实机验收
 
 Win32 热键、DPI/GDI 截图、托盘、单实例、开机启动、DLL 加载和 SmartScreen
