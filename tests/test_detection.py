@@ -176,6 +176,35 @@ class DetectionTests(unittest.TestCase):
         self.assertEqual(consolidated[0].quad, _quad(1016, 100, 1300, 120))
         self.assertEqual(consolidated[0].source_tile_indices, (0, 1))
 
+    def test_complete_height_duplicate_beats_row_seam_clipped_merge(self) -> None:
+        tiles = (
+            TileRegion(0, 0, 0, 1216, 1216, 2500, 2160),
+            TileRegion(1, 1088, 0, 1216, 1216, 2500, 2160),
+            TileRegion(3, 0, 1088, 1216, 1072, 2500, 2160),
+            TileRegion(4, 1088, 1088, 1216, 1072, 2500, 2160),
+        )
+        quads = (
+            _quad(1000, 1200, 1216, 1216),
+            _quad(1088, 1200, 1400, 1216),
+            _quad(1000, 1200, 1216, 1230),
+            _quad(1088, 1200, 1400, 1230),
+        )
+        candidates = tuple(
+            _candidate(
+                quad,
+                score=0.9,
+                tile=tile,
+                distance=0,
+                touching=True,
+            )
+            for quad, tile in zip(quads, tiles)
+        )
+
+        consolidated = consolidate_candidates(candidates)
+
+        self.assertEqual(len(consolidated), 1)
+        self.assertEqual(consolidated[0].quad, _quad(1000, 1200, 1400, 1230))
+
     def test_interior_fragment_does_not_replace_reconstructed_seam_line(self) -> None:
         left = _candidate(
             _quad(20, 100, 1214, 120),

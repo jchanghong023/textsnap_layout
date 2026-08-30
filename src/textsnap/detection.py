@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from .domain import DetectionCandidate
+from .domain import DetectionCandidate, TileRegion
 from .geometry import (
     bounding_quad,
     overlap_metrics,
@@ -12,6 +12,7 @@ from .geometry import (
     quad_dimensions,
     vertical_overlap_ratio,
 )
+from .tiling import internal_edge_metrics
 
 DEFAULT_IOU_THRESHOLD = 0.4
 DEFAULT_SMALLER_INTERSECTION_THRESHOLD = 0.6
@@ -161,17 +162,28 @@ def _merge_component(
         (candidate.source_tile for candidate in candidates),
         key=lambda tile: (tile.x, tile.y, tile.index),
     )
+    merged_quad = bounding_quad(candidate.quad for candidate in candidates)
+    component_tiles = tuple(candidate.source_tile for candidate in candidates)
+    union_x = min(tile.x for tile in component_tiles)
+    union_y = min(tile.y for tile in component_tiles)
+    union_right = max(tile.right for tile in component_tiles)
+    union_bottom = max(tile.bottom for tile in component_tiles)
+    union_tile = TileRegion(
+        index=source.index,
+        x=union_x,
+        y=union_y,
+        width=union_right - union_x,
+        height=union_bottom - union_y,
+        image_width=source.image_width,
+        image_height=source.image_height,
+    )
+    edge_distance, touches_edge = internal_edge_metrics(merged_quad, union_tile)
     return DetectionCandidate(
-        quad=bounding_quad(candidate.quad for candidate in candidates),
+        quad=merged_quad,
         detection_score=max(candidate.detection_score for candidate in candidates),
         source_tile=source,
-        # The merged box has been reconstructed across every internal seam in
-        # this component, so no single source tile's edge distance describes
-        # its reliability. Treat it like a complete outer-tile detection;
-        # otherwise a short interior fragment can replace the reconstructed
-        # long line during the following overlap de-duplication pass.
-        internal_edge_distance=float("inf"),
-        touches_internal_edge=False,
+        internal_edge_distance=edge_distance,
+        touches_internal_edge=touches_edge,
         source_tile_indices=tuple(
             index
             for candidate in candidates
