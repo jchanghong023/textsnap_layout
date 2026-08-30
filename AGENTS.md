@@ -13,7 +13,7 @@
 ## 已确定的交付边界
 
 - 目标产物是在 Windows 11 x86-64（x64）、Intel Core i7-13700 主机上原生构建的
-  `TextSnapLayout-0.1.1-win-x64.zip`。
+  `TextSnapLayout-0.1.2-win-x64.zip`。
 - 产物解压后应能在 Windows 11 x64 上直接运行，且不依赖系统 Python、额外运行库或在线模型下载。
 - 应用采用单进程 PySide6；ONNX Runtime CPU 检测/识别器在专用 `QThread` 中创建、预热并常驻，同时最多执行一个 OCR 任务。
 - OCR 只使用计划指定的本地 `PP-OCRv6_small_det` 和 `PP-OCRv6_small_rec`，不得擅自更换模型、增加语言模型或启用在线解析。

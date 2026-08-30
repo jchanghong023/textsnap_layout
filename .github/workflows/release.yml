@@ -120,6 +120,110 @@ jobs:
           & $env:PYTHON_FOR_BYTECODE -B -m scripts.build_release package --lock-dir vendor-lock --stage-dir $env:STAGE_DIR --output-dir $env:OUTPUT_DIR
           if ($LASTEXITCODE -ne 0) { throw 'package failed.' }
 
+      - name: Run embedded portable-package integration
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle = (Resolve-Path -LiteralPath $env:STAGE_DIR).Path
+          $embeddedPython = Join-Path $bundle 'runtime\pythonw.exe'
+          $runner = (Resolve-Path -LiteralPath 'tests\windows\verify_extracted_bundle.py').Path
+          if (-not (Test-Path -LiteralPath $embeddedPython -PathType Leaf)) {
+            throw "Embedded Python was not staged: $embeddedPython"
+          }
+
+          $resultDirectory = Join-Path $env:RUNNER_TEMP "textsnap-integration-${{ github.run_id }}-${{ github.run_attempt }}"
+          New-Item -ItemType Directory -Force -Path $resultDirectory | Out-Null
+          $result = Join-Path $resultDirectory 'result.json'
+          $progress = "$result.progress.jsonl"
+          Remove-Item -LiteralPath $result, $progress -Force -ErrorAction SilentlyContinue
+
+          $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+          $startInfo.FileName = $embeddedPython
+          $startInfo.UseShellExecute = $false
+          foreach ($argument in @(
+            '-I', '-B', $runner,
+            '--bundle', $bundle,
+            '--result', $result
+          )) {
+            [void]$startInfo.ArgumentList.Add($argument)
+          }
+          $process = [System.Diagnostics.Process]::Start($startInfo)
+          if ($null -eq $process) {
+            throw 'Failed to start the embedded integration runner.'
+          }
+          $process.WaitForExit()
+          $integrationExitCode = $process.ExitCode
+          $process.Dispose()
+
+          if (-not (Test-Path -LiteralPath $result -PathType Leaf)) {
+            if (Test-Path -LiteralPath $progress -PathType Leaf) {
+              Get-Content -LiteralPath $progress
+            }
+            throw 'Embedded integration runner did not produce a result.'
+          }
+          $resultJson = Get-Content -LiteralPath $result -Raw
+          $document = $resultJson | ConvertFrom-Json
+          if (
+            $integrationExitCode -ne 0 -or
+            $document.ok -ne $true -or
+            $document.status -ne 'passed'
+          ) {
+            Write-Host $resultJson
+            if (Test-Path -LiteralPath $progress -PathType Leaf) {
+              Get-Content -LiteralPath $progress
+            }
+            throw "Embedded portable-package integration failed with exit code $integrationExitCode."
+          }
+          Write-Host $resultJson
+
+      - name: Run embedded real OCR corpus regression
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bundle = (Resolve-Path -LiteralPath $env:STAGE_DIR).Path
+          $embeddedPython = Join-Path $bundle 'runtime\pythonw.exe'
+          $testScript = (Resolve-Path -LiteralPath 'tests\integration\test_real_ocr.py').Path
+          $modelRoot = Join-Path $bundle 'models'
+          $fontFile = Join-Path $bundle 'assets\fonts\NotoSansMonoCJKsc-Regular.otf'
+          foreach ($requiredFile in @($embeddedPython, $testScript, $fontFile)) {
+            if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
+              throw "Real OCR prerequisite is missing: $requiredFile"
+            }
+          }
+          if (-not (Test-Path -LiteralPath $modelRoot -PathType Container)) {
+            throw "Real OCR model root is missing: $modelRoot"
+          }
+
+          $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+          $startInfo.FileName = $embeddedPython
+          $startInfo.UseShellExecute = $false
+          $startInfo.RedirectStandardOutput = $true
+          $startInfo.RedirectStandardError = $true
+          $startInfo.Environment['TEXTSNAP_RUN_REAL_OCR'] = '1'
+          $startInfo.Environment['TEXTSNAP_TEST_MODEL_ROOT'] = $modelRoot
+          $startInfo.Environment['TEXTSNAP_TEST_FONT'] = $fontFile
+          foreach ($argument in @('-I', '-B', $testScript)) {
+            [void]$startInfo.ArgumentList.Add($argument)
+          }
+          $process = [System.Diagnostics.Process]::Start($startInfo)
+          if ($null -eq $process) {
+            throw 'Failed to start the embedded real OCR regression.'
+          }
+          $stdout = $process.StandardOutput.ReadToEndAsync()
+          $stderr = $process.StandardError.ReadToEndAsync()
+          $process.WaitForExit()
+          $ocrExitCode = $process.ExitCode
+          $stdoutText = $stdout.GetAwaiter().GetResult()
+          $stderrText = $stderr.GetAwaiter().GetResult()
+          $process.Dispose()
+          if ($stdoutText) {
+            Write-Host $stdoutText
+          }
+          if ($stderrText) {
+            Write-Host $stderrText
+          }
+          if ($ocrExitCode -ne 0) {
+            throw "Embedded real OCR corpus regression failed with exit code $ocrExitCode."
+          }
+
       - name: Verify release checksum
         run: |
           $ErrorActionPreference = 'Stop'

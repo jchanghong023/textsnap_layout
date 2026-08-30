@@ -13,7 +13,7 @@ Windows ARM64 或其他 ARM 环境；只用于个人多台电脑，不面向外�
 ## 运行方式
 
 完成构建后，交付物为
-`TextSnapLayout-0.1.1-win-x64.zip` 及同名 `.sha256`。
+`TextSnapLayout-0.1.2-win-x64.zip` 及同名 `.sha256`。
 
 1. 核对 SHA-256，将 ZIP 完整解压到当前用户可写目录。
 2. 双击根目录 `TextSnapLayout.exe`；无需系统 Python、VC++ 运行库或联网下载。
@@ -148,12 +148,14 @@ Runner 构建，不需要本地或自托管 Runner。工作流通过 `actions/se
 - 在 GitHub 的 Actions 页面手动运行 **Build and publish release**。工作流从
   `scripts.release_pipeline.PRODUCT_VERSION` 读取版本，在所选提交上创建对应
   `vX.Y.Z` 标签和 Release。
-- 推送与源码版本完全一致的标签，例如 `git push origin v0.1.1`。标签版本不一致
+- 推送与源码版本完全一致的标签，例如 `git push origin v0.1.2`。标签版本不一致
   时构建立即失败，不会发布。
 
 工作流校验仓库中的确定性 ONNX 模型，依次执行锁校验、资源获取、wheel 闭包校验、
-staging、静态验证、确定性打包和 SHA-256 复验。验证通过后同时保存 Actions
-Artifact，并把 ZIP 与 `.sha256` 直接上传为 GitHub Release 附件。
+staging、静态验证和确定性打包，随后使用便携目录自身的 `runtime/pythonw.exe`、
+包内字体与两套本地 ONNX 模型执行解压包集成验收，并对正常分辨率和 4K 受控语料
+执行真实 OCR 回归；两项集成测试和 SHA-256 复验通过后，才保存 Actions Artifact，
+并把 ZIP 与 `.sha256` 直接上传为 GitHub Release 附件。
 GitHub 托管环境是 Windows Server 2025，不替代计划
 要求的 Windows 11/i7-13700 原生行为和 OCR 实机验收。
 

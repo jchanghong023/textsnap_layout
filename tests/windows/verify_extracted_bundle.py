@@ -27,7 +27,7 @@ import weakref
 
 _SCHEMA_VERSION = 1
 _EXPECTED_PYTHON = (3, 13, 14)
-_EXPECTED_WHEEL_COUNT = 68
+_EXPECTED_WHEEL_COUNT = 70
 _RUNTIME_PTH = b"python313.zip\n.\nLib/site-packages\n../app\n"
 _CONTROLLED_TEXT = "TextSnap Layout OCR 2026"
 _CONTROLLED_TEXT_SHA256 = (
@@ -53,6 +53,7 @@ _EXPECTED_VERSIONS = {
     "colorlog": "6.12.0",
     "crc32c": "2.8",
     "filelock": "3.32.0",
+    "flatbuffers": "25.12.19",
     "frozenlist": "1.8.0",
     "fsspec": "2026.6.0",
     "future": "1.0.0",
@@ -68,6 +69,7 @@ _EXPECTED_VERSIONS = {
     "multidict": "6.7.1",
     "networkx": "3.6.1",
     "numpy": "2.2.6",
+    "onnxruntime": "1.28.0",
     "opencv-contrib-python": "4.10.0.84",
     "opt-einsum": "3.3.0",
     "packaging": "26.2",
@@ -108,6 +110,7 @@ _EXPECTED_VERSIONS = {
 }
 _CORE_DISTRIBUTIONS = (
     "numpy",
+    "onnxruntime",
     "opencv-contrib-python",
     "paddleocr",
     "paddlepaddle",

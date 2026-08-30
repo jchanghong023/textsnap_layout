@@ -3,7 +3,7 @@
 ## 1. 目标与交付边界
 
 - 在 Windows 11 x86-64（x64）、Intel Core i7-13700 开发机上原生构建
-  `TextSnapLayout-0.1.1-win-x64.zip`；不支持 Linux、Windows ARM64 或其他 ARM
+  `TextSnapLayout-0.1.2-win-x64.zip`；不支持 Linux、Windows ARM64 或其他 ARM
   主机。
 - 解压后双击根目录 `TextSnapLayout.exe` 即可运行，无需安装 Python、Paddle、VC++ 运行库或联网下载模型。
 - 首版只保证 Windows 11 x86-64（x64）、Intel Core i7-13700、CPU/AVX2

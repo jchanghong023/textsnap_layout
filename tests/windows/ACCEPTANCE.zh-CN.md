@@ -5,7 +5,7 @@ Linux、Windows ARM64 或其他 ARM 环境。
 
 ## 前置条件
 
-- 使用发布门禁通过后生成的 `TextSnapLayout-0.1.1-win-x64.zip`，先核对同名
+- 使用发布门禁通过后生成的 `TextSnapLayout-0.1.2-win-x64.zip`，先核对同名
   `.sha256`。
 - 测试机为 Intel Core i7-13700，未安装供本应用使用的系统 Python；断开网络。
 - 分别解压到普通路径、含空格路径和含中文字符路径。不要在 ZIP 内直接运行。
