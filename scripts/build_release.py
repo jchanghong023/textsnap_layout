@@ -73,7 +73,7 @@ def _stage_arguments(parser: argparse.ArgumentParser) -> None:
         "--onnx-model-root",
         type=Path,
         default=REPOSITORY_ROOT / "vendor-models",
-        help="root containing the Git LFS tracked deterministic ONNX models",
+        help="root containing the committed deterministic ONNX models",
     )
     parser.add_argument(
         "--toolchain-prefix",

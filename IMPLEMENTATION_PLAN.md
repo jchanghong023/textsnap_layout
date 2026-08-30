@@ -3,7 +3,7 @@
 ## 1. 目标与交付边界
 
 - 在 Windows 11 x86-64（x64）、Intel Core i7-13700 开发机上原生构建
-  `TextSnapLayout-0.1.0-win-x64.zip`；不支持 Linux、Windows ARM64 或其他 ARM
+  `TextSnapLayout-0.1.1-win-x64.zip`；不支持 Linux、Windows ARM64 或其他 ARM
   主机。
 - 解压后双击根目录 `TextSnapLayout.exe` 即可运行，无需安装 Python、Paddle、VC++ 运行库或联网下载模型。
 - 首版只保证 Windows 11 x86-64（x64）、Intel Core i7-13700、CPU/AVX2
@@ -155,7 +155,7 @@
 ### 4.2 构建流程
 
 1. 在 Windows 11 x64、Intel i7-13700 主机安装 x86_64 MinGW 工具链；原生编译 `TextSnapLayout.exe` 为 PE32+ x86-64 GUI subsystem，使用宽字符 API 定位自身目录并启动 `runtime/pythonw.exe -I -B app/main.py`。
-2. 下载并校验固定的 CPython embeddable package、Windows wheels、两个 Paddle 源模型和字体；从 Git LFS 工作区校验并装入两套确定性 ONNX 模型。
+2. 下载并校验固定的 CPython embeddable package、Windows wheels、两个 Paddle 源模型和字体；从仓库工作区校验并装入两套确定性 ONNX 模型。
 3. 通过完整的 win-x64 wheel lock，以 `--no-deps` 方式安装到 staging，拒绝任何非 Windows x64 平台产物。
 4. 只保留 Qt Widgets 所需模块、`qwindows` 平台插件、必要图像插件和样式；不删除 Paddle/PaddleOCR 运行所需文件。
 5. 配置 `python313._pth`，只允许包内标准库、`site-packages` 和应用源码，忽略系统 Python、用户 site 和环境变量。

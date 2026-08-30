@@ -35,7 +35,7 @@ from typing import Any, BinaryIO, Iterator, Mapping, Sequence
 
 
 PRODUCT_NAME = "TextSnapLayout"
-PRODUCT_VERSION = "0.1.0"
+PRODUCT_VERSION = "0.1.1"
 EXPECTED_WHEEL_COUNT = 70
 LOCK_SCHEMA_VERSION = "1.0.0"
 PYTHON_VERSION = "3.13.14"

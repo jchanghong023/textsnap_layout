@@ -31,7 +31,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: false
 
       - name: Set up exact CPython
         uses: actions/setup-python@v5
@@ -50,7 +49,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
 
 
-          foreach ($tool in @('git-lfs', 'gh', 'python')) {
+          foreach ($tool in @('gh', 'python')) {
             if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
               throw "Required tool is not available on PATH: $tool"
             }
@@ -86,8 +85,6 @@ jobs:
           "tag=$tag" >> $env:GITHUB_OUTPUT
           "archive=TextSnapLayout-$version-win-x64.zip" >> $env:GITHUB_OUTPUT
 
-      - name: Fetch deterministic ONNX models
-        run: git lfs pull --include="vendor-models/**" --exclude=""
 
       - name: Build and statically verify portable package
         run: |
@@ -152,19 +149,6 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-      - name: Compare tracked release ZIP
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $archive = Join-Path $env:OUTPUT_DIR '${{ steps.metadata.outputs.archive }}'
-          $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          $pointer = (& git show "HEAD:zips/${{ steps.metadata.outputs.archive }}") -join "`n"
-          if ($LASTEXITCODE -ne 0) {
-            throw 'Unable to read the tracked release ZIP LFS pointer.'
-          }
-          $tracked = [regex]::Match($pointer, 'oid sha256:([0-9a-f]{64})').Groups[1].Value
-          if ($tracked -notmatch '^[0-9a-f]{64}$' -or $actual -ne $tracked) {
-            throw "Built ZIP differs from tracked LFS ZIP: tracked $tracked, built $actual."
-          }
 
       - name: Create GitHub release
         env:

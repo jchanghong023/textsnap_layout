@@ -1,3 +1,0 @@
-zips/*.zip filter=lfs diff=lfs merge=lfs -text
-vendor-models/PP-OCRv6_small_det/inference.onnx filter=lfs diff=lfs merge=lfs -text
-vendor-models/PP-OCRv6_small_rec/inference.onnx filter=lfs diff=lfs merge=lfs -text

@@ -13,7 +13,7 @@
 ## 已确定的交付边界
 
 - 目标产物是在 Windows 11 x86-64（x64）、Intel Core i7-13700 主机上原生构建的
-  `TextSnapLayout-0.1.0-win-x64.zip`。
+  `TextSnapLayout-0.1.1-win-x64.zip`。
 - 产物解压后应能在 Windows 11 x64 上直接运行，且不依赖系统 Python、额外运行库或在线模型下载。
 - 应用采用单进程 PySide6；ONNX Runtime CPU 检测/识别器在专用 `QThread` 中创建、预热并常驻，同时最多执行一个 OCR 任务。
 - OCR 只使用计划指定的本地 `PP-OCRv6_small_det` 和 `PP-OCRv6_small_rec`，不得擅自更换模型、增加语言模型或启用在线解析。
@@ -32,7 +32,7 @@
 - `native/`：Unicode Win32 GUI launcher、图标和资源脚本。
 - `scripts/`：依赖锁定、资源获取、Windows staging、静态验证和确定性打包。
 - `tests/`：纯单元测试、真实 OCR 回归、固定样本和 Windows 验收脚本。
-- `vendor-lock/`：资源 URL、版本和 SHA-256；`vendor-models/` 仅保存经 Git LFS 跟踪且哈希锁定的确定性 ONNX 模型，不直接提交其他大型第三方二进制。
+- 本仓库禁止使用 Git LFS。`vendor-lock/` 保存资源 URL、版本和 SHA-256；`vendor-models/` 仅保存直接提交且哈希锁定的确定性 ONNX 模型，不提交其他大型第三方二进制；发布 ZIP 只作为 GitHub Actions Artifact 和 GitHub Release 附件分发，不写入仓库。
 
 当前实现的主要入口和职责：
 

@@ -13,7 +13,7 @@ Windows ARM64 或其他 ARM 环境；只用于个人多台电脑，不面向外�
 ## 运行方式
 
 完成构建后，交付物为
-`TextSnapLayout-0.1.0-win-x64.zip` 及同名 `.sha256`。
+`TextSnapLayout-0.1.1-win-x64.zip` 及同名 `.sha256`。
 
 1. 核对 SHA-256，将 ZIP 完整解压到当前用户可写目录。
 2. 双击根目录 `TextSnapLayout.exe`；无需系统 Python、VC++ 运行库或联网下载。
@@ -82,8 +82,8 @@ py -3.13 -B -m unittest tests.integration.test_real_ocr -v
 
 在 Windows 11 x64、Intel i7-13700 主机安装 x86_64 MinGW 工具链，并准备
 **精确 CPython 3.13.14** 宿主可执行文件，用于生成与嵌入运行时 magic 一致的
-checked-hash 字节码。先执行 `git lfs pull`，确保 `vendor-models` 下两套 ONNX
-模型不是 LFS 指针；缓存和 staging 必须放在仓库外的绝对短路径，避免第三方包
+checked-hash 字节码。确认 `vendor-models` 下两套直接提交的 ONNX 模型完整；
+缓存和 staging 必须放在仓库外的绝对短路径，避免第三方包
 的深层目录触发 Windows 路径长度限制：
 
 ```powershell
@@ -138,8 +138,8 @@ PE 静态检查只把与导入者位于同目录或明确运行时目录中的 D
 
 `.github/workflows/release.yml` 使用 GitHub 免费托管的 `windows-2025` x64
 Runner 构建，不需要本地或自托管 Runner。工作流通过 `actions/setup-python`
-取得精确 CPython 3.13.14，并使用托管镜像内的 x86_64 MinGW、Git LFS 和
-GitHub CLI。可选仓库变量 `TEXTSNAP_BUILD_ROOT` 指定短路径构建根目录，默认
+取得精确 CPython 3.13.14，并使用托管镜像内的 x86_64 MinGW 和 GitHub CLI。
+可选仓库变量 `TEXTSNAP_BUILD_ROOT` 指定短路径构建根目录，默认
 `C:\ts`；`TEXTSNAP_BUILD_CACHE` 指定缓存目录，默认 `C:\ts\cache`；工具链
 命令带前缀时，通过 `TEXTSNAP_TOOLCHAIN_PREFIX` 指定。
 
@@ -148,13 +148,13 @@ GitHub CLI。可选仓库变量 `TEXTSNAP_BUILD_ROOT` 指定短路径构建根�
 - 在 GitHub 的 Actions 页面手动运行 **Build and publish release**。工作流从
   `scripts.release_pipeline.PRODUCT_VERSION` 读取版本，在所选提交上创建对应
   `vX.Y.Z` 标签和 Release。
-- 推送与源码版本完全一致的标签，例如 `git push origin v0.1.0`。标签版本不一致
+- 推送与源码版本完全一致的标签，例如 `git push origin v0.1.1`。标签版本不一致
   时构建立即失败，不会发布。
 
-工作流获取 Git LFS 模型，依次执行锁校验、资源获取、wheel 闭包校验、staging、
-静态验证、确定性打包和 SHA-256 复验，并要求构建 ZIP 的哈希与仓库中同名 LFS
-ZIP 完全一致。验证通过后同时保存 Actions Artifact，并把 ZIP 与 `.sha256` 上传
-为 GitHub Release 附件。GitHub 托管环境是 Windows Server 2025，不替代计划
+工作流校验仓库中的确定性 ONNX 模型，依次执行锁校验、资源获取、wheel 闭包校验、
+staging、静态验证、确定性打包和 SHA-256 复验。验证通过后同时保存 Actions
+Artifact，并把 ZIP 与 `.sha256` 直接上传为 GitHub Release 附件。
+GitHub 托管环境是 Windows Server 2025，不替代计划
 要求的 Windows 11/i7-13700 原生行为和 OCR 实机验收。
 
 ## Windows 实机验收
